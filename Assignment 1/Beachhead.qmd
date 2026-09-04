@@ -1,0 +1,15 @@
+---
+title: "Beachhead"
+format: typst
+editor: visual
+---
+
+## Introduction
+
+I'm using the MTA Subway Hourly Ridership dataset (2020–2024) from data.ny.gov, chosen for its relevance to my work at NYCT and because it needs to be cleaned up before we can draw any conclusions. `Ridership` will serve as the target variable. Since this dataset is very large at over 500,000 rows, I have queried it so it is much more simple to work and with and publish by limiting it to the month of July 2024 consisting of riders with at least 1 transfer.
+
+To tackle the problem, I will parse the timestamp into a proper datetime, drop redundant columns, split any categorical fields into separate variables, and subset to a clean, well-named set of columns.
+
+The data challenges I anticipate include a string-formatted timestamp that needs explicit parsing, redundant or overlapping columns, a compound categorical field that conflates two variables, a large row count that may need filtering, and multiple transit modes that will require a scoping decision.
+
+## 
