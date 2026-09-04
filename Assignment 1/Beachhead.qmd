@@ -10,6 +10,6 @@ I'm using the MTA Subway Hourly Ridership dataset (2020–2024) from data.ny.gov
 
 To tackle the problem, I will parse the timestamp into a proper datetime, drop redundant columns, split any categorical fields into separate variables, and subset to a clean, well-named set of columns.
 
-The data challenges I anticipate include a string-formatted timestamp that needs explicit parsing, redundant or overlapping columns, a compound categorical field that conflates two variables, a large row count that may need filtering, and multiple transit modes that will require a scoping decision.
+The data challenges I anticipate include a string-formatted timestamp that needs to be parsed and separated to increase the ways of sorting and filtering through the data, redundant or overlapping columns, a compound categorical field that conflates two variables when they don't relate, a large row count that may need filtering, and multiple transit modes that will require a scoping decision.
 
 ## 
