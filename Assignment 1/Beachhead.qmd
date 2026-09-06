@@ -12,4 +12,29 @@ To tackle the problem, I will parse the timestamp into a proper datetime, drop r
 
 The data challenges I anticipate include a string-formatted timestamp that needs to be parsed and separated to increase the ways of sorting and filtering through the data, redundant or overlapping columns, a compound categorical field that conflates two variables when they don't relate, a large row count that may need filtering, and multiple transit modes that will require a scoping decision.
 
-## 
+## Code deliverables
+
+First, the necessary libraries must be loaded in order to load the dataset and access it.
+
+```{r}
+library(tidyverse)
+
+dataMta <- read_csv("https://raw.githubusercontent.com/daanishrasheed/DATA607/main/Assignment%201/MTA_Subway_Hourly_Ridership__7_2024.csv", show_col_types = FALSE)
+
+glimpse(dataMta)
+```
+
+As mentioned, the target variable is 'ridership', so we need to shorten the dataset to include only the information that has an impact.
+
+```{r}
+subset <- dataMta %>%
+  select(
+    transit_timestamp,
+    station_complex,
+    borough,
+    transit_mode,
+    payment_method,
+    fare_class_category,
+    ridership   # target variable
+  )
+```
