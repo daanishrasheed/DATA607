@@ -38,3 +38,30 @@ subset <- dataMta %>%
     ridership   # target variable
   )
 ```
+
+The following changes are some of the many that need to be done:
+
+- Turn "transit_timestamp" to a real date-time object instead of a string.
+
+- A new column, fare_type, is created from fare_class_category. The "OMNY - " or "Metrocard - " prefix is taken off, so the fare type stands alone. Then the remaining is modified to be shorter: "Full Fare" and "Fair Fare" will remove the 'fare', but I will clarify that 'Fair' means reduced. All other fields in the column stays the same.
+
+- Columns are renamed to more expressive names: transit_timestamp to date_time, transit_mode to transit_type, and payment_method to fare_payment_method.
+
+- Also make sure ridership is the last column as it is the target.
+
+```{r}
+MTAClean <- subset %>%
+  mutate(
+    transit_timestamp = parse_date_time(transit_timestamp, "mdY IMS p"),
+    fare_type = fare_class_category %>%
+      str_remove("^(OMNY|Metrocard)\\s*-\\s*") %>%
+      case_match(
+        "Full Fare" ~ "Full",
+        "Fair Fare" ~ "Fair (Reduced)",
+        "Seniors & Disability" ~ "Senior & Disability",
+        "Students" ~ "Students",
+        "Other" ~ "Other",
+        .default = fare_class_category
+      )
+  )
+```
