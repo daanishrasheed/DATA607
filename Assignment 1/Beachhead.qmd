@@ -14,6 +14,8 @@ The data challenges I anticipate include a string-formatted timestamp that needs
 
 ## Code deliverables
 
+### Loading libraries and raw data
+
 First, the necessary libraries must be loaded in order to load the dataset and access it.
 
 ```{r}
@@ -23,6 +25,8 @@ dataMta <- read_csv("https://raw.githubusercontent.com/daanishrasheed/DATA607/ma
 
 glimpse(dataMta)
 ```
+
+### Select all necessary columns
 
 As mentioned, the target variable is 'ridership', so we need to shorten the dataset to include only the information that has an impact.
 
@@ -38,6 +42,8 @@ subset <- dataMta %>%
     ridership   # target variable
   )
 ```
+
+### Cleaning data
 
 The following changes are some of the many that need to be done:
 
@@ -63,5 +69,12 @@ MTAClean <- subset %>%
         "Other" ~ "Other",
         .default = fare_class_category
       )
-  )
+  ) %>%
+  select(-fare_class_category) %>%
+  rename(
+    date_time = transit_timestamp,
+    transit_type = transit_mode,
+    fare_payment_method = payment_method
+  ) %>%
+  relocate(ridership, .after = last_col())
 ```
