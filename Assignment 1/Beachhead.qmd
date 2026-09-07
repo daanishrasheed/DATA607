@@ -78,3 +78,11 @@ MTAClean <- subset %>%
   ) %>%
   relocate(ridership, .after = last_col())
 ```
+
+## Conclusion
+
+The transformed data frame turns the raw MTA Subway Hourly Ridership file into a dataset primed to be analyzed. The combined fare-class string is split into separate payment method and fare type columns, and the timestamp is a proper datetime rather than a string. The target variable, riders, sits at the end of the frame, as it can be possibly predicted using all the other columns.
+
+Analysis on this data can definitely be done on a much larger scale as I only took data for July 2024. Pulling in additional months from the same source would allow seasonal or year-over-year ridership comparisons, and adding back latitude and longitude would allow us to analyze the impact of location.
+
+Also, the metrocard is being used less and less in favor of OMNY, which will make the category more populated with the latter. This will eventually make the column a bit redundant in the future and will be removed if necessary as its impact will be decreased.
