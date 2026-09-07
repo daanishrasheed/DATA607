@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/1456295/0ab037be1f2d40d0b03642af04911b2c
+bundleId: https://api.rpubs.com/api/v1/document/1456295/0ab037be1f2d40d0b03642af04911b2c
+url: http://rpubs.com/drasheed/1456295
+version: 1
