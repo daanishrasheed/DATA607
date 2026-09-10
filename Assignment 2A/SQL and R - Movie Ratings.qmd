@@ -4,23 +4,6 @@ format: typst
 editor: visual
 ---
 
-## Quarto
+## Approach
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
-```
-
-You can add options to executable code like this
-
-```{r}
-#| echo: false
-2 * 2
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).
+In this assignment, I will gather and save movie ratings to analyze them in R later. Six movies, namely The Runner, Spider-Man: Brand New Day, The Odyssey, Obsession, Project Hail Mary, and Toy Story 5, will be rated on a scale from 1 to 5 by at least five people using one common form and stored in PostgreSQL database (using SQLite in case of any issues), employing the structure where movies, raters, and ratings tables will be used; in case of not seen movie, there is just no entry. To get the data into R, direct database queries will be used, with credentials stored in environment variables rather than written in the code itself.

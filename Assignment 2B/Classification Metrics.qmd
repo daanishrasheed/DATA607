@@ -1,0 +1,9 @@
+---
+title: "Classification Metrics"
+format: typst
+editor: visual
+---
+
+## Approach
+
+In this assignment, penguin_predictions.csv will be used, where predictions are given for a female class in terms of probability, prediction label, and true label. To start with, the null error rate and the distribution of the classes will be plotted, as the accuracy of the model can be determined in relation to this benchmark. After that, confusion matrices will be made using three different probability values (0.2, 0.5, 0.8). These three different probability values will lead to three confusion matrices, and based on the number of true positives, true negatives, false positives, and false negatives obtained from these three matrices, accuracy, precision, recall, and F1 score will be calculated, and all of these will be shown in one table. The main challenge in this assignment is ensuring that the correct comparison between probability and threshold is made, as an incorrect comparison will affect all subsequent calculations.
