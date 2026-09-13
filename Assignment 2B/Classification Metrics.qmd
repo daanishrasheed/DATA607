@@ -6,4 +6,42 @@ editor: visual
 
 ## Approach
 
-In this assignment, penguin_predictions.csv will be used, where predictions are given for a female class in terms of probability, prediction label, and true label. To start with, the null error rate and the distribution of the classes will be plotted, as the accuracy of the model can be determined in relation to this benchmark. After that, confusion matrices will be made using three different probability values (0.2, 0.5, 0.8). These three different probability values will lead to three confusion matrices, and based on the number of true positives, true negatives, false positives, and false negatives obtained from these three matrices, accuracy, precision, recall, and F1 score will be calculated, and all of these will be shown in one table. The main challenge in this assignment is ensuring that the correct comparison between probability and threshold is made, as an incorrect comparison will affect all subsequent calculations.
+In this assignment, penguin_predictions.csv will be used, where predictions are given for a female class in terms of probability, prediction label, and true label. To start with, the null error rate and the distribution of the classes will be plotted, which will also indicate the accuracy of the model. After that, confusion matrices will be made using three different probability values (0.2, 0.5, 0.8). These three different probability values will lead to three confusion matrices, and based on the number of true positives, true negatives, false positives, and false negatives obtained from these three matrices, accuracy, precision, recall, and F1 score will be calculated, and all of these will be shown in one table. The main challenge in this assignment is ensuring that the correct comparison between probability and threshold is made, as an incorrect comparison will affect all later calculations.
+
+## Code Deliverable
+
+```{r setup}
+library(dplyr)
+library(ggplot2)
+library(knitr)
+
+df <- read.csv("penguin_predictions.csv")
+n <- nrow(df)
+```
+
+### Null Error Rate
+
+The null error rate is the percentage of error you would get by always guessing the majority class.
+
+```{r}
+class_counts <- table(df$sex)
+majority_class <- names(which.max(class_counts))
+majority_count <- max(class_counts)
+
+null_error_rate <- 1 - majority_count / n
+
+null_error_rate
+```
+
+From running the operations above, the male is the majority class and the null error rate is 0.419.
+
+```{r}
+ggplot(df, aes(x = sex, fill = sex)) +
+  geom_bar() +
+  labs(title = "Distribution of Actual Class (sex)",
+       x = "Actual sex", y = "Count") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+The null error rate matters because it's the baseline accuracy you'd get by always guessing the majority class, so it tells you how effective your model really is. Here, that baseline is 58.1% (a null error rate of 41.9%), which also signals some class imbalance in the data. Raw accuracy can be misleading on its own, since a model could score well just by leaning toward the majority class.
