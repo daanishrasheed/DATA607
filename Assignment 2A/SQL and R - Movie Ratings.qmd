@@ -58,3 +58,7 @@ ratings_per_rater <- ratings_long |>
 
 ratings_per_rater
 ```
+
+## Conclusion
+
+Only Toy Story 5 was seen by all five raters, whereas The Odyssey and Project Hail Mary tied on first place but with only three ratings each. Obsession had the lowest mean rating of 3.0, though based on a more substantial sample of 4. There was a variation in leniency across raters (e.g., Dayra = 4.0, Ibrahim = 3.4), which means that part of the observed variation is due to rater effects. It is recommended to report the mean ratings with consideration of the number of ratings per movie and to use a more complex analysis instead of being satisfied with thin ratings. Also, to evaluate the movies more consistently, more than five raters should be used as it can remove the effect of outliers.
