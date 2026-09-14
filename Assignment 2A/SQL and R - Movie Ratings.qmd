@@ -6,7 +6,7 @@ editor: visual
 
 ## Approach
 
-In this assignment, I will gather and save movie ratings to analyze them in R later. Six movies, namely The Runner, Spider-Man: Brand New Day, The Odyssey, Obsession, Project Hail Mary, and Toy Story 5, will be rated on a scale from 1 to 5 by at least five people using one common form and stored in PostgreSQL database (using SQLite in case of any issues), employing the structure where movies, raters, and ratings tables will be used; in case of not seen movie, there is just no entry. To get the data into R, I will export the data to a csv and load it in.
+In this assignment, I will gather and save movie ratings to analyze them in R later. Six movies, namely The Runner, Spider-Man: Brand New Day, The Odyssey, Obsession, Project Hail Mary, and Toy Story 5, will be rated on a scale from 1 to 5 by at least five people using one common form and stored in PostgreSQL database, employing the structure where movies, raters, and ratings tables will be used; in case of not seen movie, there is just no entry. To get the data into R, I will export the data to a csv and load it in.
 
 ## Code Deliverable
 
