@@ -119,18 +119,13 @@ get_metrics <- function(threshold) {
   recall <- TP / (TP + FN)         # of actual females, how many were caught
   f1 <- 2 * precision * recall / (precision + recall)
   
-  # Package everything into a one-row data frame so results can be rbind'ed together
-  data.frame(threshold = threshold, TP = TP, FP = FP, TN = TN, FN = FN,
-             accuracy = accuracy, precision = precision,
-             recall = recall, f1 = f1)
+  data.frame(accuracy = accuracy, precision = precision, recall = recall, f1 = f1)
 }
 
-# Evaluate at each threshold and stack the results into one table
 results <- do.call(rbind, lapply(thresholds, get_metrics))
 
 kable(results, digits = 4,
-      col.names = c("Threshold", "TP", "FP", "TN", "FN",
-                    "Accuracy", "Precision", "Recall", "F1 Score"))
+      col.names = c("Accuracy", "Precision", "Recall", "F1 Score"))
 ```
 
 As the threshold rises from 0.2 to 0.8, precision climbs steadily with fewer false positives while recall stays roughly flat, which is normal.
