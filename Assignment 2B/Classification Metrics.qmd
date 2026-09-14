@@ -60,7 +60,7 @@ It has four cells:
 
 - **False Negative (FN)** — predicted negative, actually positive
 
-In this assignment, "positive" = female. So TP is a penguin correctly predicted female, FP is a penguin predicted female that's actually male, and so on. The confusion matrix is the raw material everything else gets calculated from.
+In this assignment, positive = female. So TP is a penguin correctly predicted female, FP is a penguin predicted female that's actually male, and so on. The confusion matrix is the raw material everything else gets calculated from.
 
 A penguin is predicted female whenever .pred_female is greater than the threshold.
 
@@ -119,13 +119,13 @@ get_metrics <- function(threshold) {
   recall <- TP / (TP + FN)         # of actual females, how many were caught
   f1 <- 2 * precision * recall / (precision + recall)
   
-  data.frame(accuracy = accuracy, precision = precision, recall = recall, f1 = f1)
+  data.frame(threshold = threshold, accuracy = accuracy, precision = precision, recall = recall, f1 = f1)
 }
 
 results <- do.call(rbind, lapply(thresholds, get_metrics))
 
 kable(results, digits = 4,
-      col.names = c("Accuracy", "Precision", "Recall", "F1 Score"))
+      col.names = c("threshold", "Accuracy", "Precision", "Recall", "F1 Score"))
 ```
 
 As the threshold rises from 0.2 to 0.8, precision climbs steadily with fewer false positives while recall stays roughly flat, which is normal.
