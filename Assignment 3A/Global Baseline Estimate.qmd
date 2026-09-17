@@ -4,23 +4,8 @@ format: typst
 editor: visual
 ---
 
-## Quarto
+## Approach
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+I’m trying to predict the ratings that are missing based on two things: how generous each critic usually is with their ratings and how well-liked each movie is overall. I’ll start by loading the ratings exactly as they were collected, keeping the missing values blank instead of filling anything in right away. From there, I’ll calculate three averages: the overall average rating, the average rating for each movie, and the average rating for each critic. I can then see how far above or below the overall average each movie and critic tends to be. For a missing rating, I’ll add those two differences to the overall average to get a predicted rating. Since the calculation could technically give me a number below 1 or above 5, I’ll make sure the final predictions stay within that range. Before applying it to the whole dataset, I’ll also work through one prediction by hand and compare it with the example in the spreadsheet to make sure the code is doing what it’s supposed to.
 
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
-```
-
-You can add options to executable code like this
-
-```{r}
-#| echo: false
-2 * 2
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).
+There are a few obstacles I will come across such as: some critics only rated one or two movies, so their average isn’t based on much information. That makes predictions involving those critics less reliable than predictions for critics who rated a lot of movies. The same issue can come up with movies that only have a few ratings. Another thing is that the data needs to be loaded from a URL rather than from a file already saved on my computer, so I’ll need to download it to a temporary file in the code first.

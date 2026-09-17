@@ -4,23 +4,10 @@ format: typst
 editor: visual
 ---
 
-## Quarto
+## Approach
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+I need data that tracks multiple things over time, so I created fake daily stock prices for AAPL, MSFT, and GOOG covering about 130 trading days from October 2023 through March 2024. I chose this range because it crosses January 1st, which lets me test whether the year-to-date average resets correctly. I entered the data directly into my R file so I wouldn’t need a separate file or random data generator.
 
-## Running Code
+I’ll calculate the averages using both dplyr and SQL and compare the results to make sure they match. This is especially useful for checking window functions, since small mistakes like using the wrong number of days or not resetting at the new year can easily happen.
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
-```
-
-You can add options to executable code like this
-
-```{r}
-#| echo: false
-2 * 2
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).
+I’ll also check that the year-to-date calculations work for each stock and year, that the six-day moving average only appears once six trading days are available, and that the data has the expected rows, dates, and no duplicates or missing values.
