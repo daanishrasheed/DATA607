@@ -4,7 +4,9 @@ format: typst
 editor: visual
 ---
 
-## Approach
+## Window Functions
+
+### Approach
 
 I need data that tracks multiple things over time, so I created fake daily stock prices for AAPL, MSFT, and GOOG covering about 130 trading days from October 2023 through March 2024. I chose this range because it crosses January 1st, which lets me test whether the year-to-date average resets correctly. I entered the data directly into my R file so I wouldn’t need a separate file or random data generator.
 
