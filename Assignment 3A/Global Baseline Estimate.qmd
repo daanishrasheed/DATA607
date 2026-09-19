@@ -39,3 +39,56 @@ user_bias <- user_avg - mu
 kable(data.frame(Movie = names(movie_bias), Bias = round(movie_bias, 3)))
 kable(data.frame(Critic = names(user_bias), Bias = round(user_bias, 3)))
 ```
+
+Predictions are put in a vector as an outer sum of the two bias vectors plus $\mu$, then put it on the scale.
+
+```{r}
+pred <- outer(user_bias, movie_bias, "+") + mu
+pred <- pmin(pmax(predicted, 1), 5)
+kable(round(pred, 1))
+```
+
+```{r}
+predicted["Param", "PitchPerfect2"]
+```
+
+```{r}
+index  <- which(!is.na(ratings), arr.ind = TRUE)
+act   <- ratings[index]
+predic <- predicted[index]
+
+rmse <- sqrt(mean((actual_vals - predicted_vals)^2))
+rmse
+```
+
+Not every value in the output of the above code matches what is in the excel sheet. This is expected as there is never a model that is 100%. The Root Mean Square Error is approximately 74%.
+
+```{r}
+rec <- function(critic) {
+  if (!(critic %in% rownames(ratings))) {
+    return(paste("Critic not found"))
+  }
+  u <- names(which(is.na(ratings[critic, ])))
+  if (length(u) == 0) {
+    return(paste("Already rated every movie in the dataset."))
+  }
+  
+  scores <- predicted[critic, u]
+  movie <- names(sort(scores, decreasing = TRUE))[1]
+  score <- round(sort(scores, decreasing = TRUE)[1], 2)
+  
+  paste0("Recommended: ", movie,
+         " (predicted rating: ", score, ")")
+}
+
+name <- readline(prompt = "Enter name: ")
+cat(rec(name), "\n")
+```
+
+When you run the above code, you will be prompted to provide a name and it will return a movie recommendation for the person based on the estimate.
+
+## Conclusion
+
+The Global Baseline Estimate fills in all of the missing ratings on the basis of just two factors: how generous a particular critic usually is and how popular a particular movie is. The score of RMSE shows the level of proximity of such simple prediction to the actual ratings made by the critics and also how big of a gap remains between them. Some critics reviewed only one or two films, so the generosity factor for them is estimated on the basis of very small amounts of data, thus making such prediction rather approximate.
+
+There are several ways of improving the results obtained. First of all, the transition to a personalized approach is possible; it would mean finding similar users and movies for each critic and then comparing them in order to predict the ratings for critics similar enough. In addition, it would be useful to obtain more data from the critics who provided not many reviews in order to have more data points.
