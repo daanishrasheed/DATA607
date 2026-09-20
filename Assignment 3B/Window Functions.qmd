@@ -4,12 +4,69 @@ format: typst
 editor: visual
 ---
 
-## Window Functions
+# Window Functions
 
-### Approach
+## Approach
 
-I need data that tracks multiple things over time, so I created fake daily stock prices for AAPL, MSFT, and GOOG covering about 130 trading days from October 2023 through March 2024. I chose this range because it crosses January 1st, which lets me test whether the year-to-date average resets correctly. I entered the data directly into my R file so I wouldn’t need a separate file or random data generator.
+I need data that tracks multiple things over time, so I created fake daily stock prices, by use of Claude, for AAPL, MSFT, and GOOG covering about 130 trading days from October 2023 through March 2024. I chose this range because it crosses January 1st, which lets me test whether the year-to-date average resets correctly. I entered the data into my R file so I wouldn’t need a separate file or random data generator.
 
-I’ll calculate the averages using both dplyr and SQL and compare the results to make sure they match. This is especially useful for checking window functions, since small mistakes like using the wrong number of days or not resetting at the new year can easily happen.
+I’ll calculate the averages using both dplyr, check that the year-to-date calculations work for each stock and year, that the six-day moving average only appears once six trading days are available, and that the data has the expected rows, dates, and no missing values.
 
-I’ll also check that the year-to-date calculations work for each stock and year, that the six-day moving average only appears once six trading days are available, and that the data has the expected rows, dates, and no duplicates or missing values.
+## Code Deliverable
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(readr)
+library(slider)     # slide_dbl() for the rolling window
+library(duckdb)      # embedded SQL engine w/ full window-function support
+library(DBI)
+library(ggplot2)
+
+prices <- read_csv("https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Assignment%203B/prices.csv", col_types = cols(
+  ticker = col_character(),
+  date   = col_date(format = "%Y-%m-%d"),
+  price  = col_double()
+)) |>
+  arrange(ticker, date)
+
+glimpse(prices)
+```
+
+Row counts, date ordering, and missingness all check out before any window function runs on top of this data.
+
+```{r}
+pr <- prices |>
+  mutate(yr = year(date)) |>
+  group_by(ticker, yr) |>
+  arrange(date, .by_group = TRUE) |>
+  mutate(ytd_avg = cummean(price)) |>
+  ungroup() |>
+  group_by(ticker) |>
+  arrange(date, .by_group = TRUE) |>
+  mutate(
+    ma_6day = slide_dbl(price, mean, .before = 5, .complete = TRUE)
+  ) |>
+  select(-yr)
+
+pr
+```
+
+```{r}
+ggplot(prices_win, aes(x = date)) +
+  geom_line(aes(y = price), alpha = 0.3) +
+  geom_line(aes(y = ma_6day), color = "steelblue") +
+  geom_line(aes(y = ytd_avg), color = "firebrick",linetype = "dashed") +
+  facet_wrap(~ticker, ncol = 1, scales = "free_y") +
+  labs(
+    x = NULL, y = "Price"
+  ) +
+  theme_minimal()
+```
+
+## Conclusion
+
+The 6-day moving average was much more volatile compared to the year-to-date average — it was highly responsive to any fluctuations in the price over the given week — whereas the year-to-date average was slow and smooth, making a jump only during reset at the beginning of the new year, as expected for an average based on many more data points. This difference is basically what the whole paper is about — a small window is noise-sensitive, whereas a large window smooths out the noise, and the difference between the two is obvious when plotted side-by-side.
+
+A few ideas about how this project can be continued include adding another, larger moving average (for example, of 20 days) besides the 6-day one, since comparing two moving averages with different windows side-by-side is often used by traders to identify trends; using not a fixed year-to-date average, but rather a rolling one-year average.

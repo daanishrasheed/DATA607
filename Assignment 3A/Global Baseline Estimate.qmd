@@ -14,8 +14,6 @@ There are a few obstacles I will come across such as: some critics only rated on
 
 ## Code Deliverable
 
-### Loading the data
-
 ```{r}
 raw <- read_excel("MovieRatings.xlsx")  
 critics <- raw$Critic 
