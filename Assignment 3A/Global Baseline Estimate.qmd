@@ -76,7 +76,7 @@ rec <- function(critic) {
     return(paste("Already rated every movie in the dataset."))
   }
   
-  scores <- predicted[critic, u]
+  scores <- pred[critic, u]
   movie <- names(sort(scores, decreasing = TRUE))[1]
   score <- round(sort(scores, decreasing = TRUE)[1], 2)
   
