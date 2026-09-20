@@ -18,7 +18,9 @@ I’ll calculate the averages using both dplyr, check that the year-to-date calc
 library(dplyr)
 library(tidyr)
 library(readr)
+library(lubridate)
 library(ggplot2)
+library(slider)
 
 prices <- read_csv("https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Assignment%203B/prices.csv", col_types = cols(
   ticker = col_character(),
@@ -50,7 +52,7 @@ pr
 ```
 
 ```{r}
-ggplot(prices_win, aes(x = date)) +
+ggplot(pr, aes(x = date)) +
   geom_line(aes(y = price), alpha = 0.3) +
   geom_line(aes(y = ma_6day), color = "steelblue") +
   geom_line(aes(y = ytd_avg), color = "firebrick",linetype = "dashed") +

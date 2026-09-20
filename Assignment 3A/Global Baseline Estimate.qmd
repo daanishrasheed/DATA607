@@ -15,6 +15,11 @@ There are a few obstacles I will come across such as: some critics only rated on
 ## Code Deliverable
 
 ```{r}
+library(readxl)
+library(knitr)
+```
+
+```{r}
 raw <- read_excel("MovieRatings.xlsx")  
 critics <- raw$Critic 
 ratings <- as.matrix(raw[, -1]) 
@@ -42,20 +47,20 @@ Predictions are put in a vector as an outer sum of the two bias vectors plus $\m
 
 ```{r}
 pred <- outer(user_bias, movie_bias, "+") + mu
-pred <- pmin(pmax(predicted, 1), 5)
+pred <- pmin(pmax(pred, 1), 5)
 kable(round(pred, 1))
 ```
 
 ```{r}
-predicted["Param", "PitchPerfect2"]
+pred["Param", "PitchPerfect2"]
 ```
 
 ```{r}
 index  <- which(!is.na(ratings), arr.ind = TRUE)
 act   <- ratings[index]
-predic <- predicted[index]
+predic <- pred[index]
 
-rmse <- sqrt(mean((actual_vals - predicted_vals)^2))
+rmse <- sqrt(mean((act - predic)^2))
 rmse
 ```
 
