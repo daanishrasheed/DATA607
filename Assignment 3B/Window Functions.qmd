@@ -17,11 +17,7 @@ I’ll calculate the averages using both dplyr, check that the year-to-date calc
 ```{r}
 library(dplyr)
 library(tidyr)
-library(lubridate)
 library(readr)
-library(slider)     # slide_dbl() for the rolling window
-library(duckdb)      # embedded SQL engine w/ full window-function support
-library(DBI)
 library(ggplot2)
 
 prices <- read_csv("https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Assignment%203B/prices.csv", col_types = cols(
