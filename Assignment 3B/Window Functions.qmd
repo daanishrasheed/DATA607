@@ -63,6 +63,6 @@ ggplot(prices_win, aes(x = date)) +
 
 ## Conclusion
 
-The 6-day moving average was much more volatile compared to the year-to-date average — it was highly responsive to any fluctuations in the price over the given week — whereas the year-to-date average was slow and smooth, making a jump only during reset at the beginning of the new year, as expected for an average based on many more data points. This difference is basically what the whole paper is about — a small window is noise-sensitive, whereas a large window smooths out the noise, and the difference between the two is obvious when plotted side-by-side.
+The 6-day moving average was much more volatile compared to the year-to-date average. It was highly responsive to any fluctuations in the price over the given week whereas the year-to-date average was slow and smooth, making a jump only during reset at the beginning of the new year, as expected for an average based on many more data points. A small window is noise-sensitive, whereas a large window smooths out the noise, and the difference between the two is obvious when plotted side-by-side.
 
 A few ideas about how this project can be continued include adding another, larger moving average (for example, of 20 days) besides the 6-day one, since comparing two moving averages with different windows side-by-side is often used by traders to identify trends; using not a fixed year-to-date average, but rather a rolling one-year average.
