@@ -1,0 +1,15 @@
+---
+title: "Project 1"
+format: typst
+editor: visual
+---
+
+# Chess Tournament Details
+
+## Approach
+
+I would start by cleaning the input file by removing everything that does not constitute the information about any particular player in the tournament: the header of the file, as well as the separator lines. At this point, the file consists of two lines for each player where the first line contains the name, total points, and details of how every single round went for him/her and the second line – his/her state and rating.
+
+I extract the data from every single line using "\|" as a delimiter because of its predictability. The rating of some players is followed by additional comments that I strip using regular expressions to get only the number. I also extract the name of each player's opponent in every round using the same technique and skipping rounds when he/she got a bye or did not participate.
+
+Now I match the player number to his/her rating and calculate the average rating of opponents for each individual player by averaging the ratings of all the players whom he/she played against. Finally, I combine all the required information into one table.
