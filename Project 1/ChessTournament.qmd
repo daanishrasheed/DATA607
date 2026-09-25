@@ -13,3 +13,30 @@ I would start by cleaning the input file by removing everything that does not co
 I extract the data from every single line using "\|" as a delimiter because of its predictability. The rating of some players is followed by additional comments that I strip using regular expressions to get only the number. I also extract the name of each player's opponent in every round using the same technique and skipping rounds when he/she got a bye or did not participate.
 
 Now I match the player number to his/her rating and calculate the average rating of opponents for each individual player by averaging the ratings of all the players whom he/she played against. Finally, I combine all the required information into one table.
+
+## Code Base
+
+```{r}
+data_url <- "https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Project%201/tournamentinfo.txt"
+
+raw_lines <- readLines(data_url)
+
+# Drop blank lines, separator lines (all dashes), and the two header lines
+clean_lines <- raw_lines[
+  str_trim(raw_lines) != "" &
+    !str_detect(str_trim(raw_lines), "^-+$") &
+    !str_detect(str_trim(raw_lines), "^(Pair|Num)")
+]
+
+length(clean_lines)
+```
+
+```{r}
+line1 <- clean_lines[2 * 3 - 1]
+line2 <- clean_lines[2 * 3]
+
+f1 <- str_trim(str_split(line1, "\\|")[[1]])
+f2 <- str_trim(str_split(line2, "\\|")[[1]])
+
+f2
+```
