@@ -40,3 +40,8 @@ f2 <- str_trim(str_split(line2, "\\|")[[1]])
 
 f2
 ```
+
+```{r}
+name <- f1[2]
+name
+```
