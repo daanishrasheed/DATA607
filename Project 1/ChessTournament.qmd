@@ -32,16 +32,30 @@ length(clean_lines)
 ```
 
 ```{r}
-line1 <- clean_lines[2 * 3 - 1]
-line2 <- clean_lines[2 * 3]
+parse1 <- function(x) {
+  line1 <- clean_lines[2 * x - 1]
+  line2 <- clean_lines[2 * x]
+  
+  f1 <- str_trim(str_split(line1, "\\|")[[1]])
+  f2 <- str_trim(str_split(line2, "\\|")[[1]])
+  
+  numpair <- as.integer(f1[1])
+  name     <- f1[2]
+  points   <- as.numeric(f1[3])
+  
+  state <- f2[1]
+  pre_rating <- as.integer(str_extract(str_extract(f2[2], "R:\\s*\\d+"), "\\d+"))
+  
+  list(pair = numpair, name = name, state = state,
+       points = points, pre_rating = pre_rating)
+}
 
-f1 <- str_trim(str_split(line1, "\\|")[[1]])
-f2 <- str_trim(str_split(line2, "\\|")[[1]])
+players <- lapply(seq_len(n_players), parse1)
 
-f2
-```
+players_df <- bind_rows(lapply(players, function(p) {
+  tibble(pair = p$pair, name = p$name, state = p$state,
+         points = p$points, pre_rating = p$pre_rating)
+}))
 
-```{r}
-name <- f1[2]
-name
+kable(head(players_df, 5))
 ```
