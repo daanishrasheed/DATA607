@@ -89,3 +89,7 @@ To get the average opponents rating for each player, the code builds a lookup ta
 ```{r}
 write.csv(players_df, "tournament_ratings.csv", row.names = FALSE)
 ```
+
+## Conclusion
+
+This parser will take this fixed-width data structure and convert it into a CSV with all of the relevant data formatted nicely in tabular format with the columns, name, state, total score, rating before the tournament and the average rating of their opponents before the tournament, all for each player. The hardest part of doing this was calculating the average of the opponents' rating as I had to find a way to access the pair number of each opponent. I wasn't able to do this with the data as a number, so I had to reformat it as a string and individually extracted each of them.
