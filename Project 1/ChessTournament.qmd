@@ -1,6 +1,6 @@
 ---
 title: "Project 1"
-format: typst
+format: html
 editor: visual
 ---
 
@@ -17,6 +17,8 @@ Now I match the player number to his/her rating and calculate the average rating
 ## Code Base
 
 ```{r}
+library(stringr)
+library(dplyr)
 data_url <- "https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Project%201/tournamentinfo.txt"
 
 raw_lines <- readLines(data_url)
