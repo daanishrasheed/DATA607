@@ -35,27 +35,57 @@ length(clean_lines)
 parse1 <- function(x) {
   line1 <- clean_lines[2 * x - 1]
   line2 <- clean_lines[2 * x]
-  
   f1 <- str_trim(str_split(line1, "\\|")[[1]])
   f2 <- str_trim(str_split(line2, "\\|")[[1]])
   
   numpair <- as.integer(f1[1])
   name     <- f1[2]
   points   <- as.numeric(f1[3])
-  
   state <- f2[1]
   pre_rating <- as.integer(str_extract(str_extract(f2[2], "R:\\s*\\d+"), "\\d+"))
+  rounded <- f1[4:10]
+  
+  o <- rounded |>
+    str_extract("\\d+") |>
+    as.integer()
+  o <- o[!is.na(o)]
   
   list(pair = numpair, name = name, state = state,
-       points = points, pre_rating = pre_rating)
+       points = points, pre_rating = pre_rating, opponents = list(o))
 }
 
-players <- lapply(seq_len(n_players), parse1)
+n <- length(clean_lines) / 2
+
+players <- lapply(seq_len(n), parse1)
 
 players_df <- bind_rows(lapply(players, function(p) {
   tibble(pair = p$pair, name = p$name, state = p$state,
          points = p$points, pre_rating = p$pre_rating)
 }))
 
-kable(head(players_df, 5))
+head(players_df, 10)
+```
+
+\
+The above code chunk returns the pair #, name, state, points, and pre-rating for each person in the .txt file.
+
+```{r}
+ratings <- setNames(players_df$pre_rating, players_df$pair)
+
+avg_opp <- sapply(players, function(p) {
+  opp_ratings <- ratings[as.character(p$opponents[[1]])]
+  opp_ratings <- opp_ratings[!is.na(opp_ratings)]
+  if (length(opp_ratings) == 0) return(NA_real_)
+  round(mean(opp_ratings))
+})
+
+players_df$avg_opponent_pre_rating <- avg_opp
+
+head(players_df, 10)
+```
+
+To get the average opponents rating for each player, the code builds a lookup table so any rating can be found by a player's number. Then for each player, it grabs their opponents' ratings, drops any missing ones and averages the data that is available.
+
+```{r}
+write.csv(players_df, "tournament_ratings.csv", row.names = FALSE)
 ```
