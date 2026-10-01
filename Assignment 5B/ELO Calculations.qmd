@@ -1,26 +1,13 @@
 ---
-title: "ELO Calculations"
+title: "Assignment 5B"
 format: typst
 editor: visual
 ---
 
-## Quarto
+# ELO Calculations
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+## Approach
 
-## Running Code
+The idea is to reuse the parsing from Project 1 to extract a player’s pre-rating and the list of opponents and apply the Elo formula to find what the score of each player should be depending on the level of his/her opponents and to compare it with his/her actual score. Sorting the differences of the two scores gives the top five over- and under-performers.
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
-```
-
-You can add options to executable code like this
-
-```{r}
-#| echo: false
-2 * 2
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).
+Just a couple of things to note: I am calculating each player’s pre-tournament rating for every round rather than updating it after each round since this is all the information I have; so this is a simplification of how Elo system operates. Also, I should take out byes and unplayed rounds from the calculations, which is the same problem as in the previous project. Finally, since there are a number of variants of the Elo formula, I should cite the exact formula I am using.

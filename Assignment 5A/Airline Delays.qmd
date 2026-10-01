@@ -1,26 +1,13 @@
 ---
-title: "Airline Delays"
+title: "Assignment 5A"
 format: typst
 editor: visual
 ---
 
-## Quarto
+# Airline Delays
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+## Approach
 
-## Running Code
+A small table is portrayed that gives on-time and delayed arrivals for Alaska and AM West at five West Coast airports. The problem is which airline has better reliability and does it depend on aggregation of counts.
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
-```
-
-You can add options to executable code like this
-
-```{r}
-#| echo: false
-2 * 2
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).
+In R, I am going to use packages tidyr and dplyr to delete the empty row, fill the missing names of airlines and pivot the data into one line per airline and city. After that, I am going to compare the percentage of delays overall and for each city using summary table and grouped bar chart, validating the numbers against the original source. The difficult parts are the messy wide format of the table that leads to generation of NA values that have to be dealt with and comma-separated numbers that have to be entered manually as integers.
