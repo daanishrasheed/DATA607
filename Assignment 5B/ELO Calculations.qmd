@@ -8,6 +8,55 @@ editor: visual
 
 ## Approach
 
-The idea is to reuse the parsing from Project 1 to extract a player’s pre-rating and the list of opponents and apply the Elo formula to find what the score of each player should be depending on the level of his/her opponents and to compare it with his/her actual score. Sorting the differences of the two scores gives the top five over- and under-performers.
+The idea is to reuse the parsing from Project 1 to extract a player’s pre-rating and the list of opponents and apply the ELO formula to find what the score of each player should be depending on the level of his/her opponents and to compare it with his/her actual score. Sorting the differences of the two scores gives the top five over- and under-performers.
 
-Just a couple of things to note: I am calculating each player’s pre-tournament rating for every round rather than updating it after each round since this is all the information I have; so this is a simplification of how Elo system operates. Also, I should take out byes and unplayed rounds from the calculations, which is the same problem as in the previous project. Finally, since there are a number of variants of the Elo formula, I should cite the exact formula I am using.
+Just a couple of things to note: I am calculating each player’s pre-tournament rating for every round rather than updating it after each round since this is all the information I have; so this is a simplification of how ELO system operates. Also, I should take out byes and unplayed rounds from the calculations, which is the same problem as in the previous project. Finally, since there are a number of variants of the Elo formula, I should cite the exact formula I am using.
+
+## Code Base
+
+```{r}
+library(dplyr)
+library(stringr)
+library(knitr)
+
+players_df <- read.csv("https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Assignment%205B/tournament_ratings.csv")
+
+kable(head(players_df))
+```
+
+The Elo rating system calculates the probability of winning a match against a particular opponent solely using the ratings difference of the two players. Here the equation used is:
+
+$$E_A = \frac{1}{1 + 10^{(R_B - R_A)/400}}$$
+
+where $R_A$ and $R_B$ are the ratings of Players A and B respectively prior to the tournament. The sum total of $E_A$ for each match played by a player will give their expected score throughout the entire tournament. The byes and forfeited rounds are not considered since there is no actual opponent rating that can be compared against.
+
+```{r}
+players_df <- players_df |>
+  mutate(
+    expected_score = 7 * (1 / (1 + 10^((avg_opponent_pre_rating - pre_rating) / 400))),
+    expected_score = round(expected_score, 2),
+    score_diff = round(points - expected_score, 2)
+  )
+
+head(players_df)
+```
+
+```{r}
+# Five biggest overperformers
+players_df |>
+  arrange(desc(score_diff)) |>
+  select(name, points, expected_score, score_diff) |>
+  head(5)
+
+# Five biggest underperformers
+players_df |>
+  arrange(score_diff) |>
+  select(name, points, expected_score, score_diff) |>
+  head(5)
+```
+
+## Conclusion
+
+The overachievers were typically less rated players with scores significantly higher than those expected due to their opponents' rating, while the underachievers were more rated players, including the best rated player rated at 1745, with a score significantly lower than expected. This simply means that the expected score is just an estimation from pre-tournament ratings, hence a significant deviation implies poor performance with respect to their ratings.
+
+In order to further analyze or validate this, one would run a similar comparison with the use of post-tournament ratings in order to determine whether the biggest over/underachievers had also the greatest rating changes, which would be an important internal consistency check. In addition, one would analyze how sensitive the over/underachievers ranking is to the specific ELO formula being used.
