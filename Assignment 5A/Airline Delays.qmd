@@ -46,6 +46,7 @@ clean <- df |>
   rename(on_time = `on time`) |>
   mutate(
     total = on_time + delayed,
+    delay_rate = delayed / total
   )
 
 clean
@@ -70,17 +71,17 @@ overall |>
 Alaska is delayed about 13.3% of the time and AM West about 10.9%, so according to the provided data, AM West looks more reliable.
 
 ```{r}
-by_city <- tidy |>
+by_city <- clean |>
   select(airline, city, delay_rate) |>
   pivot_wider(names_from = airline, values_from = delay_rate)
 by_city |>
-  mutate(across(c(Alaska, `Am West`)))
+  mutate(across(c(ALASKA, `AM WEST`)))
 ```
 
 Alaska has the lower delay rate in all five cities, which goes against the previous conclusion we drew from when we looked at the overall delay rates of just the airlines.
 
 ```{r}
-tidy |>
+clean |>
   group_by(airline) |>
   mutate(share_of_flights = total / sum(total)) |>
   ungroup() |>
