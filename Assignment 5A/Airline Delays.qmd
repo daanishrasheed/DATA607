@@ -11,3 +11,70 @@ editor: visual
 A small table is portrayed that gives on-time and delayed arrivals for Alaska and AM West at five West Coast airports. The problem is which airline has better reliability and does it depend on aggregation of counts.
 
 In R, I am going to use packages tidyr and dplyr to delete the empty row, fill the missing names of airlines and pivot the data into one line per airline and city. After that, I am going to compare the percentage of delays overall and for each city using summary table and grouped bar chart, validating the numbers against the original source. The difficult parts are the messy wide format of the table that leads to generation of NA values that have to be dealt with and comma-separated numbers that have to be entered manually as integers.
+
+## Code Base
+
+```{r}
+library(dplyr)
+library(tidyverse)
+
+csv_url <- "https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Assignment%205A/airline_delays.csv"
+
+raw <- read_csv(csv_url, show_col_types = FALSE)
+raw
+```
+
+The data was recreated in a csv file and it is being pulled from a github repository.
+
+```{r}
+df <- raw |> rename(airline = 1, status = 2)
+df
+```
+
+To make the data easier to work with, the first two unnamed columns are labeled.
+
+```{r}
+clean <- df |>
+  filter(!if_all(everything(), is.na)) |>
+  fill(airline, .direction = "down") |>
+  pivot_longer(
+    cols = -c(airline, status),
+    names_to = "city",
+    values_to = "flights"
+  ) |>
+  pivot_wider(names_from = status, values_from = flights) |>
+  rename(on_time = `on time`) |>
+  mutate(
+    total = on_time + delayed,
+  )
+
+clean
+```
+
+The initial data table is large and has structural holes, hence, I clean it up in four main ways. Firstly, I removed the completely empty row that acts as a separator. Secondly, I populated the missing airlines by dragging the airline name downwards. Thirdly, I transformed the five city columns into long format. Lastly, I transformed the status to have total flights as a separate column for each airline and city.
+
+```{r}
+overall <- clean |>
+  group_by(airline) |>
+  summarise(
+    on_time = sum(on_time),
+    delayed = sum(delayed),
+    total = sum(total),
+    delay_rate = delayed / total
+  )
+
+overall |>
+  mutate(delay_rate = delay_rate)
+```
+
+Alaska is delayed about 13.3% of the time and AM West about 10.9%, so according to the provided data, AM West looks more reliable.
+
+```{r}
+by_city <- tidy |>
+  select(airline, city, delay_rate) |>
+  pivot_wider(names_from = airline, values_from = delay_rate)
+by_city |>
+  mutate(across(c(Alaska, `Am West`)))
+```
+
+Alaska has the lower delay rate in all five cities, which goes against the previous conclusion we drew from when we looked at the overall delay rates of just the airlines.
