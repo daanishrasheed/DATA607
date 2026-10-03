@@ -78,3 +78,18 @@ by_city |>
 ```
 
 Alaska has the lower delay rate in all five cities, which goes against the previous conclusion we drew from when we looked at the overall delay rates of just the airlines.
+
+```{r}
+tidy |>
+  group_by(airline) |>
+  mutate(share_of_flights = total / sum(total)) |>
+  ungroup() |>
+  select(airline, city, share_of_flights) |>
+  pivot_wider(names_from = airline, values_from = share_of_flights)
+```
+
+The majority of the flights that Alaska flies are towards Seattle, which has relatively high delays for both the airlines whereas, for AM West, the majority of its flights are directed to Phoenix, which rarely sees any delay for either of the airlines. AM West’s overall average has been dragged down by its Phoenix flights despite being inferior to Alaska at every single airport.
+
+## Conclusion
+
+AM West has the smaller overall percentage of delays, but Alaska has the smaller delay percentage at each of the five airports. From the point of view of an individual who will choose an airline to fly in a certain route, the comparison at the city level is the correct one, favoring Alaska, since the overall statistic mainly represents where each airline operates. The sample considered is only a snapshot of one moment in time and includes only five airports. Furthermore, there is no explanation for what makes delays different between airlines as weather and hub issues could be causes but were not checked here.
