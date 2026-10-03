@@ -1,6 +1,6 @@
 ---
 title: "Assignment 5B"
-format: typst
+format: html
 editor: visual
 ---
 
