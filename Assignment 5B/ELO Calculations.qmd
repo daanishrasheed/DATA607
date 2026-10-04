@@ -10,8 +10,6 @@ editor: visual
 
 The idea is to reuse the parsing from Project 1 to extract a player’s pre-rating and the list of opponents and apply the ELO formula to find what the score of each player should be depending on the level of his/her opponents and to compare it with his/her actual score. Sorting the differences of the two scores gives the top five over- and under-performers.
 
-Just a couple of things to note: I am calculating each player’s pre-tournament rating for every round rather than updating it after each round since this is all the information I have; so this is a simplification of how ELO system operates. Also, I should take out byes and unplayed rounds from the calculations, which is the same problem as in the previous project. Finally, since there are a number of variants of the Elo formula, I should cite the exact formula I am using.
-
 ## Code Base
 
 ```{r}
