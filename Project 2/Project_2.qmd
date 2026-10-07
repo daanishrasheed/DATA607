@@ -1,0 +1,25 @@
+---
+title:  "Project 2 — Data Tidying"
+
+author: "Daanish Rasheed"
+
+date:   today
+
+format:
+  html:
+    toc: true
+    code-fold: true
+    theme: flatly
+
+execute:
+  echo:    true
+  warning: false
+---
+
+## Approach
+
+This project will tidy three sets of data from the Week 5 Discussion 5A list and answer a question about each: the Motherboard/VICE News Kia and Hyundai theft data ([https://docs.google.com/spreadsheets/d/1-6614t_Ata5k7oESrm-HAdF1uOe8aPGRaQECl44GYeE/edit?gid=0#gid=0](#0)), the World Bank life expectancy at birth indicator ([https://data.worldbank.org/indicator/SP.DYN.LE00.IN](#0)) and the Social Security Administration top 5 baby names (<https://www.ssa.gov/oact/babynames/top5names.html>).
+
+Two of these have two header rows, so I will read in no header, bind the two rows together to make names for the columns and then pivot with tidyr::pivot_longer() and pivot_wider(), using dplyr to clean. All files will be read in as text first, in order to decide how to handle any non-numeric markers (%, .., N/A).
+
+I expect to see different issues in each file. The Kia/Hyundai data has many empty cells, percentages stored as text, month labels like Dec/19 that are not real dates, and inconsistent or misspelled city names. The World Bank file has year headers such as 1990 \[YR1990\], missing values indicated by .., footer rows that are not data, and regional aggregates mixed in with countries, and the SSA data is clean but sex and rank are stored in the header, and the 1920s and 2020s are incomplete decades.
