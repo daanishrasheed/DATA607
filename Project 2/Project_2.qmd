@@ -40,7 +40,7 @@ library(knitr)
 
 # Raw wide-format files, read straight from GitHub
 url_kia  <- "https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Project%202/Motherboard%20VICE%20News%20Kia%20Hyundai%20Theft%20Data%20-%20Data.csv"
-url_le   <- "https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Project%202/LifeExpectancy.csv"
+url_wb   <- "https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Project%202/LifeExpectancy.csv"
 url_ssa  <- "https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Project%202/ssa_top5_names.csv"
 ```
 
@@ -84,6 +84,8 @@ kia_long <- kia_raw |>
 kia_long
 ```
 
+Drop the two header rows, apply the new column names, and reshape the data from wide to long. The first pivot stacks every city and measure pair into rows. The second pivot spreads the three measures back out into columns, so that each row represents one city in one month.
+
 ```{r}
 kia_clean <- kia_long |>
   mutate(
@@ -101,24 +103,27 @@ kia_clean <- kia_long |>
 kia_clean
 ```
 
+Fix types and inconsistent values.
+
 ```{r}
 kia_tidy <- kia_clean |>
   drop_na(kia_hyundai_thefts, total_thefts) |>
   filter(total_thefts > 0) |>
-  mutate(Percentage = suppressWarnings(parse_number(Percentage)) / 100) |>
-  select(city, month_start, kia_hyundai_thefts, total_thefts, Percentage)
+  mutate(share = kia_hyundai_thefts / total_thefts) |>
+  select(city, month_start, kia_hyundai_thefts, total_thefts, share)
 
 kia_tidy
 ```
+
+Rows were dropped for any city-month with no theft counts or with zero total thefts, because a share of 0/0 is undefined and those rows cannot contribute to the analysis. The share was recomputed from the counts, because the published percent is rounded and sometimes missing.
 
 ```{r}
 
 kia_monthly <- kia_tidy |>
   group_by(month_start) |>
-  summarise(cities_reporting = n(),
-            pooled_pct = sum(kia_hyundai_thefts) / sum(total_thefts),
-            median_pct = median(Percentage),
-            .groups = "drop")
+  summarise(pooled_pct = sum(kia_hyundai_thefts) / sum(total_thefts),
+            median_pct = median(share),
+            )
 kia_monthly |>
   pivot_longer(c(pooled_pct, median_pct),
                names_to = "measure", values_to = "share") |>
@@ -126,7 +131,66 @@ kia_monthly |>
                           pooled_pct = "Pooled across cities",
                           median_pct = "Median city")) |>
   ggplot(aes(month_start, share, colour = measure)) +
-  geom_line(linewidth = 1) +
+  geom_line() +
+  scale_y_continuous() +
   labs(title = "Kia and Hyundai Thefts Through Time",
        x = "Month", y = "Percentage of all vehicle thefts")
 ```
+
+For each month, two summaries were computed across the cities that reported: the pooled share (total Kia/Hyundai thefts divided by total thefts) and the median city share. Comparing the two shows whether the rise was driven by a few large cities or was broad.
+
+```{r}
+kia_monthly
+```
+
+The pooled share began from 4.5% for December 2019 and had risen to its peak of 33.6% in May 2023, an increase of seven times. The path taken by the median city is consistent with that, and thus we can conclude that the rise is universal and not just concentrated in a few megacities. The steepest increase occurs during the second part of 2022.\
+
+## World Bank Life Expectancy
+
+```{r}
+wb_raw <- read_csv(url_wb)
+wb_raw
+```
+
+```{r}
+wb_tidy <- wb_raw |>
+  filter(!is.na(`Series Code`)) |>
+  select(country = `Country Name`, country_code = `Country Code`,
+         matches("\\[YR")) |>
+  pivot_longer(matches("\\[YR"),
+               names_to = "year", values_to = "life_expectancy") |>
+  mutate(
+    year            = as.integer(str_extract(year, "\\d{4}")),
+    life_expectancy = as.numeric(na_if(life_expectancy, ".."))
+  )
+
+wb_tidy
+```
+
+```{r}
+wb_tidy <- wb_tidy |> drop_na(life_expectancy)
+wb_tidy
+```
+
+```{r}
+income_groups <- c(WLD = "World", HIC = "High income",
+                   UMC = "Upper middle income", LMC = "Lower middle income",
+                   LIC = "Low income")
+
+wb_groups <- wb_tidy |>
+  filter(country_code %in% names(income_groups)) |>
+  mutate(group = factor(income_groups[country_code], levels = income_groups))
+
+wb_groups
+```
+
+```{r}
+ggplot(wb_groups, aes(year, life_expectancy, colour = group, group = group)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Life expectancy rose in every income group",
+       subtitle = "Data exist only for 1990, 2000 and 2016 to 2024",
+       x = "Year", y = "Life expectancy at birth (years)", colour = NULL)
+```
+
+There is an increase in life expectancy across all income categories from 1990 through 2024; moreover, these groups do not change their ranking throughout that period, being arranged from the highest (high income) to the lowest (low income). The average of the world ranks between upper middle and lower middle income groups – increases from 65 years in 1990 to 73 years in 2024. High income increased from around 74 to 80 years while the low increased from about 50 to 65. The steepness of the curve corresponding to low income indicates that the difference between the extremes decreased from about 24 years in 1990 to 15 years in 2024, but remains quite significant. Each of those income groups has a pronounced decline in 2020–2021, being the most noticeable in the case of lower middle income category. All groups return to the pre-decline levels by 2024.
