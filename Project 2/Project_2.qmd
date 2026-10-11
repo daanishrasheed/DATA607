@@ -55,3 +55,78 @@ kia_raw
 ```
 
 The file is read with no header and every column as text. Row 1 holds the city only in the first of each group of three columns, row 2 holds the measure, and the data starts in row 3.
+
+```{r}
+kia_header <- tibble(
+  city    = unlist(kia_raw[1, ], use.names = FALSE),
+  measure = unlist(kia_raw[2, ], use.names = FALSE)
+) |>
+  fill(city) |>
+  mutate(new_name = if_else(is.na(measure), "month",
+                            str_c(city, measure, sep = " - ")))
+
+kia_header
+```
+
+```{r}
+kia_long <- kia_raw |>
+  slice(-(1:2)) |>
+  setNames(kia_header$new_name) |>
+  pivot_longer(-month,
+               names_to = c("city", "measure"),
+               names_sep = " - ",
+               values_to = "value") |>
+  pivot_wider(names_from = measure, values_from = value) |>
+  rename(kia_hyundai_thefts = `Kia/Hyundais`,
+         total_thefts = All,
+         Percentage = Percent)
+
+kia_long
+```
+
+```{r}
+kia_clean <- kia_long |>
+  mutate(
+    # counts are text; "N/A" in the percent column becomes NA (warning silenced)
+    across(c(kia_hyundai_thefts, total_thefts), parse_number),
+    pct_reported = suppressWarnings(parse_number(Percentage)) / 100,
+    # "Dec/19" -> a real date (first day of that month)
+    month_start = as.Date(sprintf("%04d-%02d-01",
+                                  2000 + as.integer(str_sub(month, 5, 6)),
+                                  match(str_sub(month, 1, 3), month.abb))),
+    # correct misspellings and a state written out in full
+    city = str_replace_all(city, c("Cincinatti"    = "Cincinnati"))
+  )
+
+kia_clean
+```
+
+```{r}
+kia_tidy <- kia_clean |>
+  drop_na(kia_hyundai_thefts, total_thefts) |>
+  filter(total_thefts > 0) |>
+  mutate(Percentage = suppressWarnings(parse_number(Percentage)) / 100) |>
+  select(city, month_start, kia_hyundai_thefts, total_thefts, Percentage)
+
+kia_tidy
+```
+
+```{r}
+
+kia_monthly <- kia_tidy |>
+  group_by(month_start) |>
+  summarise(cities_reporting = n(),
+            pooled_pct = sum(kia_hyundai_thefts) / sum(total_thefts),
+            median_pct = median(Percentage),
+            .groups = "drop")
+kia_monthly |>
+  pivot_longer(c(pooled_pct, median_pct),
+               names_to = "measure", values_to = "share") |>
+  mutate(measure = recode(measure,
+                          pooled_pct = "Pooled across cities",
+                          median_pct = "Median city")) |>
+  ggplot(aes(month_start, share, colour = measure)) +
+  geom_line(linewidth = 1) +
+  labs(title = "Kia and Hyundai Thefts Through Time",
+       x = "Month", y = "Percentage of all vehicle thefts")
+```
