@@ -194,3 +194,65 @@ ggplot(wb_groups, aes(year, life_expectancy, colour = group, group = group)) +
 ```
 
 There is an increase in life expectancy across all income categories from 1990 through 2024; moreover, these groups do not change their ranking throughout that period, being arranged from the highest (high income) to the lowest (low income). The average of the world ranks between upper middle and lower middle income groups – increases from 65 years in 1990 to 73 years in 2024. High income increased from around 74 to 80 years while the low increased from about 50 to 65. The steepness of the curve corresponding to low income indicates that the difference between the extremes decreased from about 24 years in 1990 to 15 years in 2024, but remains quite significant. Each of those income groups has a pronounced decline in 2020–2021, being the most noticeable in the case of lower middle income category. All groups return to the pre-decline levels by 2024.
+
+## SSA top 5 baby names
+
+```{r}
+ssa_raw <- read_csv(url_ssa, col_names = FALSE, col_types = cols(.default = col_character()))
+```
+
+```{r}
+ssa_header <- tibble(
+  sex  = unlist(ssa_raw[1, ], use.names = FALSE),
+  rank = unlist(ssa_raw[2, ], use.names = FALSE)
+) |>
+  fill(sex) |>
+  mutate(new_name = if_else(is.na(sex), "year", str_c(sex, rank, sep = " - ")))
+
+ssa_header
+```
+
+```{r}
+ssa_tidy <- ssa_raw |>
+  slice(-(1:2)) |>
+  setNames(ssa_header$new_name) |>
+  pivot_longer(-year,
+               names_to  = c("sex", "rank"),
+               names_sep = " - ",
+               values_to = "name") |>
+  mutate(year   = as.integer(year),
+         rank   = parse_number(rank),
+         decade = year %/% 10 * 10) |>
+  arrange(year, sex, rank)
+
+ssa_tidy
+```
+
+```{r}
+ssa_top <- ssa_tidy |>
+  filter(rank == 1) |>
+  count(sex, name, name = "years_at_rank_1") |>
+  group_by(sex) |>
+  slice_max(years_at_rank_1, n = 5, with_ties = FALSE) |>
+  ungroup() |>
+  arrange(sex, desc(years_at_rank_1))
+
+ssa_top
+```
+
+```{r}
+ssa_top |>
+  transmute(Sex = str_to_title(sex), Name = name,
+            `Years at rank 1` = years_at_rank_1)
+ssa_top
+```
+
+Michael held rank 1 for boys in 44 of the 100 years, and Mary held it for girls in 30 years. Both are far ahead of any other name, with the next closest, Robert for boys and Jennifer for girls, at 15 years each.
+
+## Conclusion
+
+There was an increase from approximately 4% to 34% in the total number of car thefts reported for Kia and Hyundai among the different cities in the data, and this increase occurred widely and was not restricted to some cities only. In the life expectancy data, there was an increase in the number of years gained by each income group from 1990 to 2024; the difference between rich and poor countries decreased from 24.2 years to 15.2 years, and the drop that occurred from 2019 to 2021 happened in all income groups. In the baby names data, a handful of names dominated rank 1 (Michael for 44 years and Mary for 30 years).
+
+Regarding the theft data, cities and manufacturers need to follow the share of Kia/Hyundai monthly, as it changed rapidly and could be seen from the data months before the peak point. In case of life expectancy, the difference that remains between the groups by their income is the number that should be watched, as the increase hides this difference. And finally, for all the sets of data, the takeaway is that the raw structure concealed the variables, once the headers became the columns, the questions became easy to answer.
+
+The theft figures should be confirmed with the police departments themselves, since there is variation in reporting among the cities and some cities (Fremont and St. Petersburg) have less than 20 months of records. Including the size of the population or the number of automobiles in each city would transform the raw figures into rates of theft per capita. The life expectancy analysis should be repeated using the 2025 figures when available, and including additional years between 2000 and 2016 would eliminate the linear blank space in the graph. And lastly, the baby names analysis could include the SSA figures for all name occurrences.
