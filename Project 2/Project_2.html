@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Daanish Rasheed">
-<meta name="dcterms.date" content="2026-10-06">
+<meta name="dcterms.date" content="2026-10-11">
 
 <title>Project 2 — Data Tidying</title>
 <style>
@@ -24,6 +24,41 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -51,7 +86,17 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#approach" id="toc-approach" class="nav-link active" data-scroll-target="#approach">Approach</a></li>
+  <li><a href="#data-tidying-and-transformation" id="toc-data-tidying-and-transformation" class="nav-link active" data-scroll-target="#data-tidying-and-transformation">Data Tidying and Transformation</a>
+  <ul class="collapse">
+  <li><a href="#approach" id="toc-approach" class="nav-link" data-scroll-target="#approach">Approach</a></li>
+  <li><a href="#code-base" id="toc-code-base" class="nav-link" data-scroll-target="#code-base">Code Base</a>
+  <ul class="collapse">
+  <li><a href="#kia-and-hyundai-thefts" id="toc-kia-and-hyundai-thefts" class="nav-link" data-scroll-target="#kia-and-hyundai-thefts">Kia and Hyundai Thefts</a></li>
+  </ul></li>
+  <li><a href="#world-bank-life-expectancy" id="toc-world-bank-life-expectancy" class="nav-link" data-scroll-target="#world-bank-life-expectancy">World Bank Life Expectancy</a></li>
+  <li><a href="#ssa-top-5-baby-names" id="toc-ssa-top-5-baby-names" class="nav-link" data-scroll-target="#ssa-top-5-baby-names">SSA top 5 baby names</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
+  </ul></li>
   </ul>
 </nav>
 </div>
@@ -76,7 +121,7 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">October 6, 2026</p>
+      <p class="date">October 11, 2026</p>
     </div>
   </div>
   
@@ -88,11 +133,545 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<section id="data-tidying-and-transformation" class="level1">
+<h1>Data Tidying and Transformation</h1>
 <section id="approach" class="level2">
 <h2 class="anchored" data-anchor-id="approach">Approach</h2>
 <p>This project will tidy three sets of data from the Week 5 Discussion 5A list and answer a question about each: the Motherboard/VICE News Kia and Hyundai theft data (<a href="#0">https://docs.google.com/spreadsheets/d/1-6614t_Ata5k7oESrm-HAdF1uOe8aPGRaQECl44GYeE/edit?gid=0#gid=0</a>), the World Bank life expectancy at birth indicator (<a href="#0">https://data.worldbank.org/indicator/SP.DYN.LE00.IN</a>) and the Social Security Administration top 5 baby names (<a href="https://www.ssa.gov/oact/babynames/top5names.html" class="uri">https://www.ssa.gov/oact/babynames/top5names.html</a>).</p>
 <p>Two of these have two header rows, so I will read in no header, bind the two rows together to make names for the columns and then pivot with tidyr::pivot_longer() and pivot_wider(), using dplyr to clean. All files will be read in as text first, in order to decide how to handle any non-numeric markers (%, .., N/A).</p>
 <p>I expect to see different issues in each file. The Kia/Hyundai data has many empty cells, percentages stored as text, month labels like Dec/19 that are not real dates, and inconsistent or misspelled city names. The World Bank file has year headers such as 1990 [YR1990], missing values indicated by .., footer rows that are not data, and regional aggregates mixed in with countries, and the SSA data is clean but sex and rank are stored in the header, and the 1920s and 2020s are incomplete decades.</p>
+</section>
+<section id="code-base" class="level2">
+<h2 class="anchored" data-anchor-id="code-base">Code Base</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(scales)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Raw wide-format files, read straight from GitHub</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>url_kia  <span class="ot">&lt;-</span> <span class="st">"https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Project%202/Motherboard%20VICE%20News%20Kia%20Hyundai%20Theft%20Data%20-%20Data.csv"</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>url_wb   <span class="ot">&lt;-</span> <span class="st">"https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Project%202/LifeExpectancy.csv"</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>url_ssa  <span class="ot">&lt;-</span> <span class="st">"https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Project%202/ssa_top5_names.csv"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<section id="kia-and-hyundai-thefts" class="level3">
+<h3 class="anchored" data-anchor-id="kia-and-hyundai-thefts">Kia and Hyundai Thefts</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>kia_raw <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(url_kia, <span class="at">col_names =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>()))</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Raw rows:"</span>, <span class="fu">nrow</span>(kia_raw), <span class="st">"| raw columns:"</span>, <span class="fu">ncol</span>(kia_raw), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Raw rows: 47 | raw columns: 211 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>kia_raw</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 47 × 211
+   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12   X13  
+   &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;
+ 1 &lt;NA&gt;  Denv… &lt;NA&gt;  &lt;NA&gt;  El P… &lt;NA&gt;  &lt;NA&gt;  Port… &lt;NA&gt;  &lt;NA&gt;  Atla… &lt;NA&gt;  &lt;NA&gt; 
+ 2 &lt;NA&gt;  Kia/… All   Perc… Kia/… All   Perc… Kia/… All   Perc… Kia/… All   Perc…
+ 3 Dec/… 48    615   8%    13    103   13%   13    592   2%    &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; 
+ 4 Jan/… 21    519   4%    9     95    9%    12    559   2%    &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; 
+ 5 Feb/… 28    402   7%    5     64    8%    10    498   2%    &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; 
+ 6 Mar/… 35    508   7%    6     75    8%    4     465   1%    &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; 
+ 7 Apr/… 39    616   6%    1     57    2%    7     488   1%    &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; 
+ 8 May/… 37    692   5%    1     62    2%    7     387   2%    &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; 
+ 9 Jun/… 57    747   8%    8     77    10%   11    423   3%    &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; 
+10 Jul/… 57    786   7%    5     62    8%    11    528   2%    &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; 
+# ℹ 37 more rows
+# ℹ 198 more variables: X14 &lt;chr&gt;, X15 &lt;chr&gt;, X16 &lt;chr&gt;, X17 &lt;chr&gt;, X18 &lt;chr&gt;,
+#   X19 &lt;chr&gt;, X20 &lt;chr&gt;, X21 &lt;chr&gt;, X22 &lt;chr&gt;, X23 &lt;chr&gt;, X24 &lt;chr&gt;,
+#   X25 &lt;chr&gt;, X26 &lt;chr&gt;, X27 &lt;chr&gt;, X28 &lt;chr&gt;, X29 &lt;chr&gt;, X30 &lt;chr&gt;,
+#   X31 &lt;chr&gt;, X32 &lt;chr&gt;, X33 &lt;chr&gt;, X34 &lt;chr&gt;, X35 &lt;chr&gt;, X36 &lt;chr&gt;,
+#   X37 &lt;chr&gt;, X38 &lt;chr&gt;, X39 &lt;chr&gt;, X40 &lt;chr&gt;, X41 &lt;chr&gt;, X42 &lt;chr&gt;,
+#   X43 &lt;chr&gt;, X44 &lt;chr&gt;, X45 &lt;chr&gt;, X46 &lt;chr&gt;, X47 &lt;chr&gt;, X48 &lt;chr&gt;, …</code></pre>
+</div>
+</div>
+<p>The file is read with no header and every column as text. Row 1 holds the city only in the first of each group of three columns, row 2 holds the measure, and the data starts in row 3.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>kia_header <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">city    =</span> <span class="fu">unlist</span>(kia_raw[<span class="dv">1</span>, ], <span class="at">use.names =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">measure =</span> <span class="fu">unlist</span>(kia_raw[<span class="dv">2</span>, ], <span class="at">use.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fill</span>(city) <span class="sc">|&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">new_name =</span> <span class="fu">if_else</span>(<span class="fu">is.na</span>(measure), <span class="st">"month"</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>                            <span class="fu">str_c</span>(city, measure, <span class="at">sep =</span> <span class="st">" - "</span>)))</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>kia_header</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 211 × 3
+   city     measure      new_name               
+   &lt;chr&gt;    &lt;chr&gt;        &lt;chr&gt;                  
+ 1 &lt;NA&gt;     &lt;NA&gt;         month                  
+ 2 Denver   Kia/Hyundais Denver - Kia/Hyundais  
+ 3 Denver   All          Denver - All           
+ 4 Denver   Percent      Denver - Percent       
+ 5 El Paso  Kia/Hyundais El Paso - Kia/Hyundais 
+ 6 El Paso  All          El Paso - All          
+ 7 El Paso  Percent      El Paso - Percent      
+ 8 Portland Kia/Hyundais Portland - Kia/Hyundais
+ 9 Portland All          Portland - All         
+10 Portland Percent      Portland - Percent     
+# ℹ 201 more rows</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>kia_long <span class="ot">&lt;-</span> kia_raw <span class="sc">|&gt;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="sc">-</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(kia_header<span class="sc">$</span>new_name) <span class="sc">|&gt;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="sc">-</span>month,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="fu">c</span>(<span class="st">"city"</span>, <span class="st">"measure"</span>),</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_sep =</span> <span class="st">" - "</span>,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"value"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> measure, <span class="at">values_from =</span> value) <span class="sc">|&gt;</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">kia_hyundai_thefts =</span> <span class="st">`</span><span class="at">Kia/Hyundais</span><span class="st">`</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">total_thefts =</span> All,</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">Percentage =</span> Percent)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>kia_long</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3,150 × 5
+   month  city           kia_hyundai_thefts total_thefts Percentage
+   &lt;chr&gt;  &lt;chr&gt;          &lt;chr&gt;              &lt;chr&gt;        &lt;chr&gt;     
+ 1 Dec/19 Denver         48                 615          8%        
+ 2 Dec/19 El Paso        13                 103          13%       
+ 3 Dec/19 Portland       13                 592          2%        
+ 4 Dec/19 Atlanta        &lt;NA&gt;               &lt;NA&gt;         &lt;NA&gt;      
+ 5 Dec/19 Chicago        46                 767          6%        
+ 6 Dec/19 Virginia Beach &lt;NA&gt;               &lt;NA&gt;         &lt;NA&gt;      
+ 7 Dec/19 Louisville     14                 &lt;NA&gt;         &lt;NA&gt;      
+ 8 Dec/19 San Diego      25                 430          6%        
+ 9 Dec/19 Sacramento     2                  &lt;NA&gt;         &lt;NA&gt;      
+10 Dec/19 Dallas         21                 &lt;NA&gt;         &lt;NA&gt;      
+# ℹ 3,140 more rows</code></pre>
+</div>
+</div>
+<p>Drop the two header rows, apply the new column names, and reshape the data from wide to long. The first pivot stacks every city and measure pair into rows. The second pivot spreads the three measures back out into columns, so that each row represents one city in one month.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>kia_clean <span class="ot">&lt;-</span> kia_long <span class="sc">|&gt;</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># counts are text; "N/A" in the percent column becomes NA (warning silenced)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">across</span>(<span class="fu">c</span>(kia_hyundai_thefts, total_thefts), parse_number),</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">pct_reported =</span> <span class="fu">suppressWarnings</span>(<span class="fu">parse_number</span>(Percentage)) <span class="sc">/</span> <span class="dv">100</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># "Dec/19" -&gt; a real date (first day of that month)</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">month_start =</span> <span class="fu">as.Date</span>(<span class="fu">sprintf</span>(<span class="st">"%04d-%02d-01"</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>                                  <span class="dv">2000</span> <span class="sc">+</span> <span class="fu">as.integer</span>(<span class="fu">str_sub</span>(month, <span class="dv">5</span>, <span class="dv">6</span>)),</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>                                  <span class="fu">match</span>(<span class="fu">str_sub</span>(month, <span class="dv">1</span>, <span class="dv">3</span>), month.abb))),</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># correct misspellings and a state written out in full</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">city =</span> <span class="fu">str_replace_all</span>(city, <span class="fu">c</span>(<span class="st">"Cincinatti"</span>    <span class="ot">=</span> <span class="st">"Cincinnati"</span>))</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>kia_clean</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3,150 × 7
+   month  city           kia_hyundai_thefts total_thefts Percentage pct_reported
+   &lt;chr&gt;  &lt;chr&gt;                       &lt;dbl&gt;        &lt;dbl&gt; &lt;chr&gt;             &lt;dbl&gt;
+ 1 Dec/19 Denver                         48          615 8%                 0.08
+ 2 Dec/19 El Paso                        13          103 13%                0.13
+ 3 Dec/19 Portland                       13          592 2%                 0.02
+ 4 Dec/19 Atlanta                        NA           NA &lt;NA&gt;              NA   
+ 5 Dec/19 Chicago                        46          767 6%                 0.06
+ 6 Dec/19 Virginia Beach                 NA           NA &lt;NA&gt;              NA   
+ 7 Dec/19 Louisville                     14           NA &lt;NA&gt;              NA   
+ 8 Dec/19 San Diego                      25          430 6%                 0.06
+ 9 Dec/19 Sacramento                      2           NA &lt;NA&gt;              NA   
+10 Dec/19 Dallas                         21           NA &lt;NA&gt;              NA   
+# ℹ 3,140 more rows
+# ℹ 1 more variable: month_start &lt;date&gt;</code></pre>
+</div>
+</div>
+<p>Fix types and inconsistent values.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>kia_tidy <span class="ot">&lt;-</span> kia_clean <span class="sc">|&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>(kia_hyundai_thefts, total_thefts) <span class="sc">|&gt;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(total_thefts <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">share =</span> kia_hyundai_thefts <span class="sc">/</span> total_thefts) <span class="sc">|&gt;</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(city, month_start, kia_hyundai_thefts, total_thefts, share)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>kia_tidy</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2,792 × 5
+   city          month_start kia_hyundai_thefts total_thefts  share
+   &lt;chr&gt;         &lt;date&gt;                   &lt;dbl&gt;        &lt;dbl&gt;  &lt;dbl&gt;
+ 1 Denver        2019-12-01                  48          615 0.0780
+ 2 El Paso       2019-12-01                  13          103 0.126 
+ 3 Portland      2019-12-01                  13          592 0.0220
+ 4 Chicago       2019-12-01                  46          767 0.0600
+ 5 San Diego     2019-12-01                  25          430 0.0581
+ 6 Fort Worth    2019-12-01                  12          352 0.0341
+ 7 Bakersfield   2019-12-01                   9          360 0.025 
+ 8 Omaha, NE     2019-12-01                  11          277 0.0397
+ 9 Lubbock, TX   2019-12-01                   6          130 0.0462
+10 Irving, Texas 2019-12-01                   2           58 0.0345
+# ℹ 2,782 more rows</code></pre>
+</div>
+</div>
+<p>Rows were dropped for any city-month with no theft counts or with zero total thefts, because a share of 0/0 is undefined and those rows cannot contribute to the analysis. The share was recomputed from the counts, because the published percent is rounded and sometimes missing.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>kia_monthly <span class="ot">&lt;-</span> kia_tidy <span class="sc">|&gt;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(month_start) <span class="sc">|&gt;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">pooled_pct =</span> <span class="fu">sum</span>(kia_hyundai_thefts) <span class="sc">/</span> <span class="fu">sum</span>(total_thefts),</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">median_pct =</span> <span class="fu">median</span>(share),</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>kia_monthly <span class="sc">|&gt;</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">c</span>(pooled_pct, median_pct),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"measure"</span>, <span class="at">values_to =</span> <span class="st">"share"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">measure =</span> <span class="fu">recode</span>(measure,</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>                          <span class="at">pooled_pct =</span> <span class="st">"Pooled across cities"</span>,</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>                          <span class="at">median_pct =</span> <span class="st">"Median city"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(month_start, share, <span class="at">colour =</span> measure)) <span class="sc">+</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>() <span class="sc">+</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Kia and Hyundai Thefts Through Time"</span>,</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Month"</span>, <span class="at">y =</span> <span class="st">"Percentage of all vehicle thefts"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Project_2_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>For each month, two summaries were computed across the cities that reported: the pooled share (total Kia/Hyundai thefts divided by total thefts) and the median city share. Comparing the two shows whether the rise was driven by a few large cities or was broad.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>kia_monthly</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 45 × 3
+   month_start pooled_pct median_pct
+   &lt;date&gt;           &lt;dbl&gt;      &lt;dbl&gt;
+ 1 2019-12-01      0.0447     0.0469
+ 2 2020-01-01      0.0407     0.0389
+ 3 2020-02-01      0.0377     0.0378
+ 4 2020-03-01      0.0444     0.0472
+ 5 2020-04-01      0.0373     0.0357
+ 6 2020-05-01      0.0377     0.0316
+ 7 2020-06-01      0.0404     0.0345
+ 8 2020-07-01      0.0440     0.0463
+ 9 2020-08-01      0.0497     0.0435
+10 2020-09-01      0.0504     0.0390
+# ℹ 35 more rows</code></pre>
+</div>
+</div>
+<p>The pooled share began from 4.5% for December 2019 and had risen to its peak of 33.6% in May 2023, an increase of seven times. The path taken by the median city is consistent with that, and thus we can conclude that the rise is universal and not just concentrated in a few megacities. The steepest increase occurs during the second part of 2022.<br>
+</p>
+</section>
+</section>
+<section id="world-bank-life-expectancy" class="level2">
+<h2 class="anchored" data-anchor-id="world-bank-life-expectancy">World Bank Life Expectancy</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>wb_raw <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(url_wb)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>wb_raw</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 270 × 16
+   `Series Name`     `Series Code` `Country Name` `Country Code` `1990 [YR1990]`
+   &lt;chr&gt;             &lt;chr&gt;         &lt;chr&gt;          &lt;chr&gt;          &lt;chr&gt;          
+ 1 Life expectancy … SP.DYN.LE00.… Africa Easter… AFE            51.09632645430…
+ 2 Life expectancy … SP.DYN.LE00.… Africa Wester… AFW            48.45115887336…
+ 3 Life expectancy … SP.DYN.LE00.… Arab World     ARB            62.75597272998…
+ 4 Life expectancy … SP.DYN.LE00.… Caribbean sma… CSS            67.04515051400…
+ 5 Life expectancy … SP.DYN.LE00.… Central Europ… CEB            70.65633133725…
+ 6 Life expectancy … SP.DYN.LE00.… Early-demogra… EAR            60.63832613250…
+ 7 Life expectancy … SP.DYN.LE00.… East Asia &amp; P… EAS            68.28254925844…
+ 8 Life expectancy … SP.DYN.LE00.… East Asia &amp; P… EAP            67.15058425458…
+ 9 Life expectancy … SP.DYN.LE00.… East Asia &amp; P… TEA            67.10594181736…
+10 Life expectancy … SP.DYN.LE00.… Euro area      EMU            75.70557501212…
+# ℹ 260 more rows
+# ℹ 11 more variables: `2000 [YR2000]` &lt;chr&gt;, `2016 [YR2016]` &lt;chr&gt;,
+#   `2017 [YR2017]` &lt;chr&gt;, `2018 [YR2018]` &lt;chr&gt;, `2019 [YR2019]` &lt;chr&gt;,
+#   `2020 [YR2020]` &lt;chr&gt;, `2021 [YR2021]` &lt;chr&gt;, `2022 [YR2022]` &lt;chr&gt;,
+#   `2023 [YR2023]` &lt;chr&gt;, `2024 [YR2024]` &lt;chr&gt;, `2025 [YR2025]` &lt;chr&gt;</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>wb_tidy <span class="ot">&lt;-</span> wb_raw <span class="sc">|&gt;</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(<span class="st">`</span><span class="at">Series Code</span><span class="st">`</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="at">country =</span> <span class="st">`</span><span class="at">Country Name</span><span class="st">`</span>, <span class="at">country_code =</span> <span class="st">`</span><span class="at">Country Code</span><span class="st">`</span>,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">matches</span>(<span class="st">"</span><span class="sc">\\</span><span class="st">[YR"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">matches</span>(<span class="st">"</span><span class="sc">\\</span><span class="st">[YR"</span>),</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"year"</span>, <span class="at">values_to =</span> <span class="st">"life_expectancy"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">year            =</span> <span class="fu">as.integer</span>(<span class="fu">str_extract</span>(year, <span class="st">"</span><span class="sc">\\</span><span class="st">d{4}"</span>)),</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">life_expectancy =</span> <span class="fu">as.numeric</span>(<span class="fu">na_if</span>(life_expectancy, <span class="st">".."</span>))</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>wb_tidy</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3,180 × 4
+   country                     country_code  year life_expectancy
+   &lt;chr&gt;                       &lt;chr&gt;        &lt;int&gt;           &lt;dbl&gt;
+ 1 Africa Eastern and Southern AFE           1990            51.1
+ 2 Africa Eastern and Southern AFE           2000            52.6
+ 3 Africa Eastern and Southern AFE           2016            62.2
+ 4 Africa Eastern and Southern AFE           2017            62.6
+ 5 Africa Eastern and Southern AFE           2018            63.3
+ 6 Africa Eastern and Southern AFE           2019            63.9
+ 7 Africa Eastern and Southern AFE           2020            63.8
+ 8 Africa Eastern and Southern AFE           2021            63.0
+ 9 Africa Eastern and Southern AFE           2022            64.5
+10 Africa Eastern and Southern AFE           2023            65.1
+# ℹ 3,170 more rows</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>wb_tidy <span class="ot">&lt;-</span> wb_tidy <span class="sc">|&gt;</span> <span class="fu">drop_na</span>(life_expectancy)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>wb_tidy</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2,904 × 4
+   country                     country_code  year life_expectancy
+   &lt;chr&gt;                       &lt;chr&gt;        &lt;int&gt;           &lt;dbl&gt;
+ 1 Africa Eastern and Southern AFE           1990            51.1
+ 2 Africa Eastern and Southern AFE           2000            52.6
+ 3 Africa Eastern and Southern AFE           2016            62.2
+ 4 Africa Eastern and Southern AFE           2017            62.6
+ 5 Africa Eastern and Southern AFE           2018            63.3
+ 6 Africa Eastern and Southern AFE           2019            63.9
+ 7 Africa Eastern and Southern AFE           2020            63.8
+ 8 Africa Eastern and Southern AFE           2021            63.0
+ 9 Africa Eastern and Southern AFE           2022            64.5
+10 Africa Eastern and Southern AFE           2023            65.1
+# ℹ 2,894 more rows</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>income_groups <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">WLD =</span> <span class="st">"World"</span>, <span class="at">HIC =</span> <span class="st">"High income"</span>,</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>                   <span class="at">UMC =</span> <span class="st">"Upper middle income"</span>, <span class="at">LMC =</span> <span class="st">"Lower middle income"</span>,</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>                   <span class="at">LIC =</span> <span class="st">"Low income"</span>)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>wb_groups <span class="ot">&lt;-</span> wb_tidy <span class="sc">|&gt;</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(country_code <span class="sc">%in%</span> <span class="fu">names</span>(income_groups)) <span class="sc">|&gt;</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">group =</span> <span class="fu">factor</span>(income_groups[country_code], <span class="at">levels =</span> income_groups))</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>wb_groups</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 55 × 5
+   country     country_code  year life_expectancy group      
+   &lt;chr&gt;       &lt;chr&gt;        &lt;int&gt;           &lt;dbl&gt; &lt;fct&gt;      
+ 1 High income HIC           1990            74.5 High income
+ 2 High income HIC           2000            76.0 High income
+ 3 High income HIC           2016            79.7 High income
+ 4 High income HIC           2017            79.9 High income
+ 5 High income HIC           2018            80.0 High income
+ 6 High income HIC           2019            80.2 High income
+ 7 High income HIC           2020            79.2 High income
+ 8 High income HIC           2021            78.8 High income
+ 9 High income HIC           2022            79.4 High income
+10 High income HIC           2023            80.1 High income
+# ℹ 45 more rows</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(wb_groups, <span class="fu">aes</span>(year, life_expectancy, <span class="at">colour =</span> group, <span class="at">group =</span> group)) <span class="sc">+</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Life expectancy rose in every income group"</span>,</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Data exist only for 1990, 2000 and 2016 to 2024"</span>,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"Life expectancy at birth (years)"</span>, <span class="at">colour =</span> <span class="cn">NULL</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Project_2_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>There is an increase in life expectancy across all income categories from 1990 through 2024; moreover, these groups do not change their ranking throughout that period, being arranged from the highest (high income) to the lowest (low income). The average of the world ranks between upper middle and lower middle income groups – increases from 65 years in 1990 to 73 years in 2024. High income increased from around 74 to 80 years while the low increased from about 50 to 65. The steepness of the curve corresponding to low income indicates that the difference between the extremes decreased from about 24 years in 1990 to 15 years in 2024, but remains quite significant. Each of those income groups has a pronounced decline in 2020–2021, being the most noticeable in the case of lower middle income category. All groups return to the pre-decline levels by 2024.</p>
+</section>
+<section id="ssa-top-5-baby-names" class="level2">
+<h2 class="anchored" data-anchor-id="ssa-top-5-baby-names">SSA top 5 baby names</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>ssa_raw <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(url_ssa, <span class="at">col_names =</span> <span class="cn">FALSE</span>, <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>ssa_header <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">sex  =</span> <span class="fu">unlist</span>(ssa_raw[<span class="dv">1</span>, ], <span class="at">use.names =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">rank =</span> <span class="fu">unlist</span>(ssa_raw[<span class="dv">2</span>, ], <span class="at">use.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fill</span>(sex) <span class="sc">|&gt;</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">new_name =</span> <span class="fu">if_else</span>(<span class="fu">is.na</span>(sex), <span class="st">"year"</span>, <span class="fu">str_c</span>(sex, rank, <span class="at">sep =</span> <span class="st">" - "</span>)))</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>ssa_header</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 11 × 3
+   sex   rank   new_name      
+   &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;         
+ 1 &lt;NA&gt;  Year   year          
+ 2 Girls Rank 1 Girls - Rank 1
+ 3 Girls Rank 2 Girls - Rank 2
+ 4 Girls Rank 3 Girls - Rank 3
+ 5 Girls Rank 4 Girls - Rank 4
+ 6 Girls Rank 5 Girls - Rank 5
+ 7 Boys  Rank 1 Boys - Rank 1 
+ 8 Boys  Rank 2 Boys - Rank 2 
+ 9 Boys  Rank 3 Boys - Rank 3 
+10 Boys  Rank 4 Boys - Rank 4 
+11 Boys  Rank 5 Boys - Rank 5 </code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>ssa_tidy <span class="ot">&lt;-</span> ssa_raw <span class="sc">|&gt;</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="sc">-</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(ssa_header<span class="sc">$</span>new_name) <span class="sc">|&gt;</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="sc">-</span>year,</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to  =</span> <span class="fu">c</span>(<span class="st">"sex"</span>, <span class="st">"rank"</span>),</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_sep =</span> <span class="st">" - "</span>,</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"name"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year   =</span> <span class="fu">as.integer</span>(year),</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">rank   =</span> <span class="fu">parse_number</span>(rank),</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">decade =</span> year <span class="sc">%/%</span> <span class="dv">10</span> <span class="sc">*</span> <span class="dv">10</span>) <span class="sc">|&gt;</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(year, sex, rank)</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>ssa_tidy</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1,000 × 5
+    year sex    rank name     decade
+   &lt;int&gt; &lt;chr&gt; &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt;
+ 1  1926 Boys      1 Robert     1920
+ 2  1926 Boys      2 John       1920
+ 3  1926 Boys      3 James      1920
+ 4  1926 Boys      4 William    1920
+ 5  1926 Boys      5 Charles    1920
+ 6  1926 Girls     1 Mary       1920
+ 7  1926 Girls     2 Dorothy    1920
+ 8  1926 Girls     3 Betty      1920
+ 9  1926 Girls     4 Helen      1920
+10  1926 Girls     5 Margaret   1920
+# ℹ 990 more rows</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>ssa_top <span class="ot">&lt;-</span> ssa_tidy <span class="sc">|&gt;</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rank <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(sex, name, <span class="at">name =</span> <span class="st">"years_at_rank_1"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(sex) <span class="sc">|&gt;</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_max</span>(years_at_rank_1, <span class="at">n =</span> <span class="dv">5</span>, <span class="at">with_ties =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(sex, <span class="fu">desc</span>(years_at_rank_1))</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>ssa_top</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 3
+   sex   name     years_at_rank_1
+   &lt;chr&gt; &lt;chr&gt;              &lt;int&gt;
+ 1 Boys  Michael               44
+ 2 Boys  Robert                15
+ 3 Boys  Jacob                 14
+ 4 Boys  James                 13
+ 5 Boys  Liam                   9
+ 6 Girls Mary                  30
+ 7 Girls Jennifer              15
+ 8 Girls Emily                 12
+ 9 Girls Jessica                9
+10 Girls Lisa                   8</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>ssa_top <span class="sc">|&gt;</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(<span class="at">Sex =</span> <span class="fu">str_to_title</span>(sex), <span class="at">Name =</span> name,</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>            <span class="st">`</span><span class="at">Years at rank 1</span><span class="st">`</span> <span class="ot">=</span> years_at_rank_1)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 3
+   Sex   Name     `Years at rank 1`
+   &lt;chr&gt; &lt;chr&gt;                &lt;int&gt;
+ 1 Boys  Michael                 44
+ 2 Boys  Robert                  15
+ 3 Boys  Jacob                   14
+ 4 Boys  James                   13
+ 5 Boys  Liam                     9
+ 6 Girls Mary                    30
+ 7 Girls Jennifer                15
+ 8 Girls Emily                   12
+ 9 Girls Jessica                  9
+10 Girls Lisa                     8</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>ssa_top</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 3
+   sex   name     years_at_rank_1
+   &lt;chr&gt; &lt;chr&gt;              &lt;int&gt;
+ 1 Boys  Michael               44
+ 2 Boys  Robert                15
+ 3 Boys  Jacob                 14
+ 4 Boys  James                 13
+ 5 Boys  Liam                   9
+ 6 Girls Mary                  30
+ 7 Girls Jennifer              15
+ 8 Girls Emily                 12
+ 9 Girls Jessica                9
+10 Girls Lisa                   8</code></pre>
+</div>
+</div>
+<p>Michael held rank 1 for boys in 44 of the 100 years, and Mary held it for girls in 30 years. Both are far ahead of any other name, with the next closest, Robert for boys and Jennifer for girls, at 15 years each.</p>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>There was an increase from approximately 4% to 34% in the total number of car thefts reported for Kia and Hyundai among the different cities in the data, and this increase occurred widely and was not restricted to some cities only. In the life expectancy data, there was an increase in the number of years gained by each income group from 1990 to 2024; the difference between rich and poor countries decreased from 24.2 years to 15.2 years, and the drop that occurred from 2019 to 2021 happened in all income groups. In the baby names data, a handful of names dominated rank 1 (Michael for 44 years and Mary for 30 years).</p>
+<p>Regarding the theft data, cities and manufacturers need to follow the share of Kia/Hyundai monthly, as it changed rapidly and could be seen from the data months before the peak point. In case of life expectancy, the difference that remains between the groups by their income is the number that should be watched, as the increase hides this difference. And finally, for all the sets of data, the takeaway is that the raw structure concealed the variables, once the headers became the columns, the questions became easy to answer.</p>
+<p>The theft figures should be confirmed with the police departments themselves, since there is variation in reporting among the cities and some cities (Fremont and St.&nbsp;Petersburg) have less than 20 months of records. Including the size of the population or the number of automobiles in each city would transform the raw figures into rates of theft per capita. The life expectancy analysis should be repeated using the 2025 figures when available, and including additional years between 2000 and 2016 would eliminate the linear blank space in the graph. And lastly, the baby names analysis could include the SSA figures for all name occurrences.</p>
+</section>
 </section>
 
 </main>
