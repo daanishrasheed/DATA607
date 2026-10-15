@@ -7,3 +7,5 @@ editor: visual
 # HTML and JSON
 
 ## Approach
+
+This assignment compares the same three books (*Cosmos*, *An Astronaut’s Guide to Life on Earth*, and *Welcome to the Universe*) loaded from an HTML table and a JSON file into R data frames. I’ll hand-write both files, host them on GitHub, and load them by URL. The main challenge I anticipate is the authors column: JSON stores multiple authors as an array, while an HTML cell holds only text, so I’ll flatten the JSON array into a semicolon-separated string to match. I also expect smaller mismatches, like year loading as text from one source and a number from the other, or the two readers returning different object classes. I’ll inspect and standardize column names, order, and types before comparing, and if the data frames still differ, I’ll report exactly where.
