@@ -1,0 +1,9 @@
+---
+title: "Assignment 7"
+format: html
+editor: visual
+---
+
+# HTML and JSON
+
+## Approach
