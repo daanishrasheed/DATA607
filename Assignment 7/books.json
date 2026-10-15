@@ -1,0 +1,25 @@
+{
+  "books": [
+    {
+      "title": "Cosmos",
+      "authors": ["Carl Sagan"],
+      "year": 1980,
+      "publisher": "Random House",
+      "primary_focus": "Bridges science and the humanities, exploring the 15-billion-year history of cosmic evolution and the human quest to understand the universe."
+    },
+    {
+      "title": "An Astronaut's Guide to Life on Earth",
+      "authors": ["Chris Hadfield"],
+      "year": 2013,
+      "publisher": "Little, Brown and Company",
+      "primary_focus": "Shares lessons learned from training for and commanding space missions, emphasizing the value of negative thinking and preparedness."
+    },
+    {
+      "title": "Welcome to the Universe: An Astrophysical Tour",
+      "authors": ["Neil deGrasse Tyson", "Michael A. Strauss", "J. Richard Gott"],
+      "year": 2016,
+      "publisher": "Princeton University Press",
+      "primary_focus": "An accessible but mathematically grounded tour through the cosmos, breaking down everything from planets and stars to Einstein's theories of relativity and the Big Bang."
+    }
+  ]
+}
