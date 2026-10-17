@@ -9,3 +9,42 @@ editor: visual
 ## Approach
 
 This assignment compares the same three books (*Cosmos*, *An Astronaut’s Guide to Life on Earth*, and *Welcome to the Universe*) loaded from an HTML table and a JSON file into R data frames. I’ll hand-write both files, host them on GitHub, and load them by URL. The main challenge I anticipate is the authors column: JSON stores multiple authors as an array, while an HTML cell holds only text, so I’ll flatten the JSON array into a semicolon-separated string to match. I also expect smaller mismatches, like year loading as text from one source and a number from the other, or the two readers returning different object classes. I’ll inspect and standardize column names, order, and types before comparing, and if the data frames still differ, I’ll report exactly where.
+
+## Code Base
+
+```{r}
+library(tidyverse)
+
+
+html_url <- "https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Assignment%207/books.html"
+json_url <- "https://raw.githubusercontent.com/daanishrasheed/DATA607/refs/heads/main/Assignment%207/books.json"
+```
+
+```{r}
+books_html <- read_html(html_url) |>
+  html_element("table") |>
+  html_table()
+
+books_html
+```
+
+```{r}
+books_json <- fromJSON(json_url)$books |>
+  as_tibble() |>
+  mutate(authors = map_chr(authors, \(a) str_c(a, collapse = "; ")))
+
+books_json
+```
+
+```{r}
+identical(books_html, books_json)
+all.equal(books_html, books_json)
+```
+
+```{r}
+tibble(
+  column = names(books_html),
+  html   = map_chr(books_html, \(x) class(x)[1]),
+  json   = map_chr(books_json, \(x) class(x)[1])
+)
+```
