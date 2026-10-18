@@ -48,3 +48,7 @@ tibble(
   json   = map_chr(books_json, \(x) class(x)[1])
 )
 ```
+
+## Conclusion
+
+After turning the JSON authors array into a delimited string, the data frames output by each of the sources are completely the same in terms of column names, order, data types, and values. The only structural difference is that the JSON data structure handles the list of authors as an array, whereas the HTML data structure can hold just text inside a cell, requiring the delimiter.
