@@ -19,6 +19,5 @@ Finally I will calculate how many times each publisher appears, graph the top 10
 ## Code Base
 
 ```{r}
-install.packages("usethis")
-usethis::edit_r_environ()
+
 ```
