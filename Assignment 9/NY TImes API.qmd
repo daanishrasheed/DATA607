@@ -7,3 +7,18 @@ editor: visual
 ## NY Times API
 
 ## Approach
+
+I am going to use the "Best Sellers" endpoint of the NYT Books API to get a summary of the highest selling books in all current bestseller lists. I want to find out which publishers are dominating this weeks lists and which books are appearing on multiple lists.
+
+Once I have confirmed that I can use my API key, I will extract the nested JSON data and create a clean table with one row for each book on each list. This will include the list name, rank, number of weeks on the list, book title, author, publisher, ISBN and price.
+
+To clean the data I will replace any empty strings with actual missing values. I will also convert the ranking, weeks on list and price to numerical values. I will also identify any books that are brand new to the list this week. Finally I will remove any nested columns that aren’t required such as the buy link. I will also leave the books that are repeated as they are part of my question.
+
+Finally I will calculate how many times each publisher appears, graph the top 10 and find any books that are appearing on multiple lists.
+
+## Code Base
+
+```{r}
+install.packages("usethis")
+usethis::edit_r_environ()
+```
