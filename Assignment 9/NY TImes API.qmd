@@ -19,5 +19,55 @@ Finally I will calculate how many times each publisher appears, graph the top 10
 ## Code Base
 
 ```{r}
+library(tidyverse)
+library(httr2)
 
+api_key <- Sys.getenv("NYT_API_KEY")
+```
+
+```{r}
+resp <- request("https://api.nytimes.com/svc/books/v3/lists/overview.json") |>
+  req_url_query(`api-key` = api_key) |>
+  req_user_agent("DATA607 NYT API assignment") |>
+  req_retry(max_tries = 3) |>
+  req_perform()
+
+resp_status(resp)
+
+body <- resp_body_json(resp, simplifyVector = FALSE)
+
+body$results$published_date
+length(body$results$lists)
+
+```
+
+```{r}
+books_raw <- tibble(lists = body$results$lists) |>
+  unnest_wider(lists) |>
+  select(list_name, display_name, books) |>
+  unnest_longer(books) |>
+  unnest_wider(books)
+
+books <- books_raw |>
+  transmute(
+    list_name,
+    rank = as.integer(rank),
+    rank_last_week = as.integer(rank_last_week),
+    weeks_on_list = as.integer(weeks_on_list),
+    title = str_to_title(title),
+    author,
+    publisher,
+    isbn13 = primary_isbn13,
+    description,
+    age_group,
+    price = parse_number(as.character(price))
+  ) |>
+
+  mutate(
+    across(where(is.character), ~ na_if(str_squish(.x), "")),
+    new_this_week = rank_last_week == 0,
+    price = na_if(price, 0)
+  )
+
+books
 ```
