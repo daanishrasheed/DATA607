@@ -28,16 +28,13 @@ api_key <- Sys.getenv("NYT_API_KEY")
 ```{r}
 resp <- request("https://api.nytimes.com/svc/books/v3/lists/overview.json") |>
   req_url_query(`api-key` = api_key) |>
-  req_user_agent("DATA607 NYT API assignment") |>
-  req_retry(max_tries = 3) |>
   req_perform()
 
 resp_status(resp)
 
 body <- resp_body_json(resp, simplifyVector = FALSE)
 
-body$results$published_date
-length(body$results$lists)
+body$results$lists[[4]]$books[[7]]$title
 
 ```
 
@@ -69,5 +66,57 @@ books <- books_raw |>
     price = na_if(price, 0)
   )
 
-books
+head(books)
+```
+
+### Which publishers appear most often?
+
+```{r}
+publisher_counts <- books |>
+  filter(!is.na(publisher)) |>
+  count(publisher, sort = TRUE)
+
+head(publisher_counts)
+```
+
+```{r}
+publisher_counts |>
+  slice_head(n = 20) |>
+  mutate(publisher = fct_reorder(publisher, n)) |>
+  ggplot(aes(n, publisher)) +
+  geom_col(fill = "#326891") +
+  labs(
+    title = "Publishers with the most books on NYT best-seller lists",
+    subtitle = "Top books from each list in the weekly overview",
+    x = "Number of list appearances",
+    y = NULL
+  ) +
+  theme_minimal()
+```
+
+### Which books climbed the most compared to last week?
+
+```{r}
+books |>
+  filter(!new_this_week) |>
+  mutate(rank_change = rank_last_week - rank) |>
+  arrange(desc(rank_change)) |>
+  select(title, author, list_name, rank_change) |>
+  slice_head(n = 10)
+```
+
+### How long do best sellers usually last?
+
+```{r}
+books |>
+  distinct(isbn13, .keep_all = TRUE) |>
+  ggplot(aes(weeks_on_list)) +
+  geom_histogram(binwidth = 1, fill = "#326891", boundary = 0) +
+  coord_cartesian(xlim = c(0, 50)) +
+  labs(
+    title = "Weeks on the best-seller list",
+    x = "Weeks on list",
+    y = "Number of books"
+  ) +
+  theme_minimal()
 ```
