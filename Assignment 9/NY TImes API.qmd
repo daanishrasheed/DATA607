@@ -1,6 +1,6 @@
 ---
 title: "Assignment 9"
-format: typst
+format: html
 editor: visual
 ---
 
@@ -17,6 +17,12 @@ To clean the data I will replace any empty strings with actual missing values. I
 Finally I will calculate how many times each publisher appears, graph the top 10 and find any books that are appearing on multiple lists.
 
 ## Code Base
+
+The Best Sellers overview endpoint is at <https://api.nytimes.com/svc/books/v3/lists/overview.json>. It returns the top books from every current best-seller list, including fiction, nonfiction, and children’s, in a single call. The JSON response is nested, with a list of best-seller lists that each contain a list of books.
+
+The request uses two parameters. The first is api-key, which authenticates the request and is read from the NYT_API_KEY environment variable rather than hard-coded. The second is published_date, which I left out so that the API goes to the most recent overview.
+
+To keep the key secure, I stored it in an environment variable. I opened my .Renviron file, added the line NYT_API_KEY=your_key_here, saved it, and restarted R. The key never appears in this file or in the GitHub repository.
 
 ```{r}
 library(tidyverse)
@@ -84,7 +90,7 @@ publisher_counts |>
   slice_head(n = 20) |>
   mutate(publisher = fct_reorder(publisher, n)) |>
   ggplot(aes(n, publisher)) +
-  geom_col(fill = "#326891") +
+  geom_col(fill = "#234312") 
   labs(
     title = "Publishers with the most books on NYT best-seller lists",
     subtitle = "Top books from each list in the weekly overview",
@@ -111,7 +117,7 @@ books |>
 books |>
   distinct(isbn13, .keep_all = TRUE) |>
   ggplot(aes(weeks_on_list)) +
-  geom_histogram(binwidth = 1, fill = "#326891", boundary = 0) +
+  geom_histogram(binwidth = 1, fill = "#785945", boundary = 0) +
   coord_cartesian(xlim = c(0, 50)) +
   labs(
     title = "Weeks on the best-seller list",
@@ -120,3 +126,7 @@ books |>
   ) +
   theme_minimal()
 ```
+
+## Conclusion
+
+In one call of the Books API overview endpoint, we can get an insight into the world of best-sellers. The publishers’ list demonstrates that the top-selling book lists are dominated by just a few big publishers, and the multi-lists table reveals which books appear in several lists at once. Since this is just one snapshot per week, the results will only reflect this specific week; however, with different published_date parameter values, it could be used to compare results over time (one API call per 5 minutes).
