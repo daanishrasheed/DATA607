@@ -1,5 +1,5 @@
 ---
-title: "Nobel Prize"
+title: "Assignment 10B"
 author: "Daanish Rasheed"
 format: html
 editor: visual
