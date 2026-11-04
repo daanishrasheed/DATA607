@@ -5,23 +5,10 @@ format: html
 editor: visual
 ---
 
-## Quarto
+# Nobel Prize API
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+## Approach
 
-## Running Code
+I will use both Nobel Prize APIs to pull laureate and prize data as JSON into R, looping through the paginated results until every record is collected. The data will load directly from the API URLs, and I will flatten the nested JSON into two tidy data frames, one row per laureate-prize and one row per prize, pulling out fields like birth country, gender, category, and affiliation along the way.
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
-```
-
-You can add options to executable code like this
-
-```{r}
-#| echo: false
-2 * 2
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).
+I plan to ask four questions. Each question will include the question, the code, and the answer as a table or plot. I expect to handle organizations with no birth or gender data, incomplete birth dates, and years when no prize was awarded explicitly
