@@ -11,4 +11,38 @@ editor: visual
 
 I will use both Nobel Prize APIs to pull laureate and prize data as JSON into R, looping through the paginated results until every record is collected. The data will load directly from the API URLs, and I will flatten the nested JSON into two tidy data frames, one row per laureate-prize and one row per prize, pulling out fields like birth country, gender, category, and affiliation along the way.
 
-I plan to ask four questions. Each question will include the question, the code, and the answer as a table or plot. I expect to handle organizations with no birth or gender data, incomplete birth dates, and years when no prize was awarded explicitly
+I plan to ask four questions. Each question will include the question, the code, and the answer as a table or plot. I expect to handle organizations with no birth or gender data, incomplete birth dates, and years when no prize was awarded explicitly.
+
+## Code Base
+
+```{r}
+library(tidyverse)
+library(jsonlite)
+
+base_url <- "https://api.nobelprize.org/2.1"
+
+fetch_all <- function(endpoint, key, page_size = 100) {
+  out <- list()
+  offset <- 0
+  repeat {
+    url <- sprintf("%s/%s?offset=%d&limit=%d", base_url, endpoint, offset, page_size)
+    res <- fromJSON(url, simplifyVector = FALSE)
+    batch <- res[[key]]
+    if (length(batch) == 0) break
+    out <- c(out, batch)
+    offset <- offset + page_size
+    if (!is.null(res$meta$count) && offset >= res$meta$count) break
+  }
+  out
+}
+
+laureates_raw <- fetch_all("laureates", "laureates")
+prizes_raw    <- fetch_all("nobelPrizes", "nobelPrizes")
+
+
+```
+
+```{r}
+length(laureates_raw)
+length(prizes_raw)
+```

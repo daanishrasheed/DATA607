@@ -14,3 +14,17 @@ The project replicates and builds on the sentiment analysis example from Chapter
 In the first part of the project, I will replicate the code from the book in a Quarto document, referencing the book and the source. This includes loading the dictionaries, tidying the novels into one-word-per-row format, scoring sentiment throughout each novel in 80-line chunks, comparing all three dictionaries for Pride and Prejudice, identifying the most positive and negative words, creating word clouds, and the most negative chapters in each novel.
 
 Secondly, I will replace the current corpus with US State of the Union addresses, from the sotu package, as well as add the Syuzhet lexicon, from the syuzhet package, making a total of four lexicons. Because speeches do not have chapters or lines, I will score by year rather than by 80-line intervals, normalized for 1,000 words to control for variations in speech length. I will perform comparisons between the four lexicons using trajectories, correlation, lexicon coverage, and the most impactful words, and interpret the results in the context of the Austen example, including the impact of the new domain and scoring one word at a time
+
+## Code Base
+
+```{r}
+library(tidytext)
+library(janeaustenr)
+library(dplyr)
+library(stringr)
+library(tidyr)
+library(ggplot2)
+library(wordcloud)
+library(reshape2)
+library(purrr)
+```
