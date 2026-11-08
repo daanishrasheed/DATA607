@@ -17,6 +17,8 @@ Secondly, I will replace the current corpus with US State of the Union addresses
 
 ## Code Base
 
+### Reproducing Chapter 2 Example
+
 ```{r}
 library(tidytext)
 library(janeaustenr)
@@ -27,4 +29,274 @@ library(ggplot2)
 library(wordcloud)
 library(reshape2)
 library(purrr)
+```
+
+```{r}
+install.packages("textdata")
+```
+
+```{r}
+get_sentiments("afinn")
+```
+
+```{r}
+get_sentiments("bing")
+```
+
+```{r}
+get_sentiments("nrc")
+```
+
+```{r}
+tidy_books <- austen_books() %>%
+  group_by(book) %>%
+  mutate(
+    linenumber = row_number(),
+    chapter = cumsum(str_detect(text,
+                                regex("^chapter [\\divxlc]",
+                                      ignore_case = TRUE)))) %>%
+  ungroup() %>%
+  unnest_tokens(word, text)
+```
+
+```{r}
+nrc_joy <- get_sentiments("nrc") %>%
+  filter(sentiment == "joy")
+
+tidy_books %>%
+  filter(book == "Emma") %>%
+  inner_join(nrc_joy) %>%
+  count(word, sort = TRUE)
+```
+
+```{r}
+jane_austen_sentiment <- tidy_books %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(book, index = linenumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  mutate(sentiment = positive - negative)
+```
+
+```{r}
+ggplot(jane_austen_sentiment, aes(index, sentiment, fill = book)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~book, ncol = 2, scales = "free_x")
+```
+
+```{r}
+pride_prejudice <- tidy_books %>% 
+  filter(book == "Pride & Prejudice")
+
+pride_prejudice
+```
+
+```{r}
+afinn <- pride_prejudice %>% 
+  inner_join(get_sentiments("afinn")) %>% 
+  group_by(index = linenumber %/% 80) %>% 
+  summarise(sentiment = sum(value)) %>% 
+  mutate(method = "AFINN")
+
+bing_and_nrc <- bind_rows(
+  pride_prejudice %>% 
+    inner_join(get_sentiments("bing")) %>%
+    mutate(method = "Bing et al."),
+  pride_prejudice %>% 
+    inner_join(get_sentiments("nrc") %>% 
+                 filter(sentiment %in% c("positive", 
+                                         "negative"))
+    ) %>%
+    mutate(method = "NRC")) %>%
+  count(method, index = linenumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment,
+              values_from = n,
+              values_fill = 0) %>% 
+  mutate(sentiment = positive - negative)
+```
+
+```{r}
+bind_rows(afinn, 
+          bing_and_nrc) %>%
+  ggplot(aes(index, sentiment, fill = method)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~method, ncol = 1, scales = "free_y")
+```
+
+```{r}
+get_sentiments("nrc") %>% 
+  filter(sentiment %in% c("positive", "negative")) %>% 
+  count(sentiment)
+```
+
+```{r}
+get_sentiments("bing") %>%
+  count(sentiment)
+```
+
+```{r}
+bing_word_counts <- tidy_books %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+
+bing_word_counts
+```
+
+```{r}
+bing_word_counts %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 10) %>% 
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(x = "Contribution to sentiment",
+       y = NULL)
+```
+
+```{r}
+custom_stop_words <- bind_rows(tibble(word = c("miss"),  
+                                      lexicon = c("custom")), 
+                               stop_words)
+
+custom_stop_words
+```
+
+```{r}
+tidy_books %>%
+  anti_join(stop_words) %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100))
+```
+
+```{r}
+tidy_books %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("gray20", "gray80"),
+                   max.words = 100)
+
+```
+
+```{r}
+p_and_p_sentences <- tibble(text = prideprejudice) %>% 
+  unnest_tokens(sentence, text, token = "sentences")
+
+p_and_p_sentences$sentence[2]
+```
+
+```{r}
+austen_chapters <- austen_books() %>%
+  group_by(book) %>%
+  unnest_tokens(chapter, text, token = "regex", 
+                pattern = "Chapter|CHAPTER [\\dIVXLC]") %>%
+  ungroup()
+
+austen_chapters %>% 
+  group_by(book) %>% 
+  summarise(chapters = n())
+```
+
+```{r}
+bingnegative <- get_sentiments("bing") %>% 
+  filter(sentiment == "negative")
+
+wordcounts <- tidy_books %>%
+  group_by(book, chapter) %>%
+  summarize(words = n())
+
+tidy_books %>%
+  semi_join(bingnegative) %>%
+  group_by(book, chapter) %>%
+  summarize(negativewords = n()) %>%
+  left_join(wordcounts, by = c("book", "chapter")) %>%
+  mutate(ratio = negativewords/words) %>%
+  filter(chapter != 0) %>%
+  slice_max(ratio, n = 1) %>% 
+  ungroup()
+```
+
+### Extending Analysis
+
+The sotu package contains the text of the U.S. President's State of the Union address along with metadata, with sotu_meta containing president, year, party and type of speech. The text spans over two centuries. There is no text to break into chapters/lines so the unit of text will be per year.
+
+```{r}
+library(sotu)
+
+sotu_df <- sotu_meta %>%
+  mutate(text = sotu_text) %>%
+  select(president, year, party, text)
+
+sotu_tidy <- sotu_df %>%
+  unnest_tokens(word, text)
+
+total_words <- sotu_tidy %>% count(year, name = "total_words")
+
+glimpse(sotu_df)
+nrow(sotu_tidy)
+```
+
+The Syuzhet dictionary was created by Matthew Jockers in the Nebraska Literary Lab, using human coded sentence level data in a corpus of fiction. It can be accessed through the syuzhet R package. Unlike the AFINN word list it is a numerical list, with values ranging from approximately -1 to 1.
+
+```{r}
+library(syuzhet)
+
+syuzhet_lex <- get_sentiment_dictionary("syuzhet") %>%
+  as_tibble() %>%
+  select(word, value)
+
+afinn_lex <- get_sentiments("afinn")
+bing_lex  <- get_sentiments("bing")
+nrc_lex   <- get_sentiments("nrc") %>%
+  filter(sentiment %in% c("positive", "negative"))
+
+range(syuzhet_lex$value)
+nrow(syuzhet_lex)
+```
+
+Speeches differ a lot in length, so unlike Austen's fixed 80-line sections, raw sums would mostly track how long each address was. To balance this, I will divide each year's net score by its total word count and express it per 1,000 words.
+
+```{r}
+score_numeric <- function(lex, method) {
+  sotu_tidy %>%
+    inner_join(lex, by = "word") %>%
+    group_by(year) %>%
+    summarise(raw = sum(value)) %>%
+    mutate(method = method)
+}
+```
+
+```{r}
+score_binary <- function(lex, method) {
+  sotu_tidy %>%
+    inner_join(lex, by = "word") %>%
+    count(year, sentiment) %>%
+    pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+    mutate(raw = positive - negative) %>%
+    select(year, raw) %>%
+    mutate(method = method)
+}
+```
+
+```{r}
+sotu_scores <- bind_rows(
+  score_numeric(afinn_lex, "AFINN"),
+  score_binary(bing_lex, "Bing et al."),
+  score_binary(nrc_lex, "NRC"),
+  score_numeric(syuzhet_lex, "Syuzhet")
+) %>%
+  left_join(total_words, by = "year") %>%
+  mutate(score = raw / total_words * 1000) %>%
+  group_by(method) %>%
+  mutate(z = as.numeric(scale(score))) %>%
+  ungroup()
+```
+
+```{r}
+ggplot(sotu_scores, aes(year, score, fill = method)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~method, ncol = 1, scales = "free_y") +
+  labs(x = NULL, y = "Net sentiment per 1,000 words")
 ```
