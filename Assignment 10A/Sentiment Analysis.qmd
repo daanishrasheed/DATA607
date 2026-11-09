@@ -32,10 +32,6 @@ library(purrr)
 ```
 
 ```{r}
-install.packages("textdata")
-```
-
-```{r}
 get_sentiments("afinn")
 ```
 

@@ -46,3 +46,162 @@ prizes_raw    <- fetch_all("nobelPrizes", "nobelPrizes")
 length(laureates_raw)
 length(prizes_raw)
 ```
+
+```{r}
+laureates <- tibble(raw = laureates_raw) |>
+  hoist(raw,
+        id            = "id",
+        name          = c("knownName", "en"),
+        org_name      = c("orgName", "en"),
+        gender        = "gender",
+        birth_date    = c("birth", "date"),
+        birth_country = c("birth", "place", "countryNow", "en"),
+        prizes        = "nobelPrizes") |>
+  select(-raw)
+
+laureates
+```
+
+```{r}
+laureate_prizes <- laureates |>
+  unnest_longer(prizes) |>
+  hoist(prizes,
+        award_year = "awardYear",
+        category = c("category", "en"),
+        aff_name = list("affiliations", 1, "name", "en"),
+        aff_country = list("affiliations", 1, "countryNow", "en")) |>
+  mutate(
+    award_year = as.integer(award_year),
+    birth_year = as.integer(str_sub(birth_date, 1, 4)),
+    age_at_award = award_year - birth_year,
+    decade = floor(award_year / 10) * 10
+  ) |>
+  select(-prizes)
+
+laureate_prizes
+```
+
+```{r}
+prizes <- tibble(raw = prizes_raw) |>
+  hoist(raw,
+        award_year = "awardYear",
+        category   = c("category", "en"),
+        laureates  = "laureates") |>
+  mutate(
+    award_year = as.integer(award_year),
+    decade = floor(award_year / 10) * 10,
+    n_laureates = lengths(laureates)   # 0 when a prize was not awarded
+  ) |>
+  select(-raw, -laureates)
+
+prizes
+```
+
+**Question #1:** For each decade, what percentage of individual Nobel Prize awards went to women?
+
+```{r}
+women_by_decade <- laureate_prizes |>
+  filter(!is.na(gender)) |>
+  group_by(decade) |>
+  summarise(awards = n(),
+            women = sum(gender == "female"),
+            pct_women = round(100 * women / awards, 1),
+            .groups = "drop")
+
+women_by_decade
+```
+
+```{r}
+ggplot(women_by_decade, aes(decade, pct_women)) +
+  geom_col(fill = "steelblue") +
+  labs(title = "Share of Nobel awards going to women, by decade",
+       x = "Decade", y = "% of individual awards")
+```
+
+**Question #2:** What is the median age at which laureates receive each prize, and how does that compare before and after 1970?
+
+```{r}
+age_summary <- laureate_prizes |>
+  filter(!is.na(age_at_award)) |>
+  mutate(era = if_else(award_year < 1970, "before_1970", "1970_onward")) |>
+  group_by(category, era) |>
+  summarise(median_age = median(age_at_award), n = n(), .groups = "drop") |>
+  pivot_wider(names_from = era, values_from = c(median_age, n)) |>
+  mutate(change_in_median = median_age_1970_onward - median_age_before_1970) |>
+  arrange(desc(change_in_median))
+
+age_summary
+```
+
+```{r}
+laureate_prizes |>
+  filter(!is.na(age_at_award)) |>
+  ggplot(aes(reorder(category, age_at_award, median), age_at_award)) +
+  geom_boxplot(fill = "grey85") +
+  coord_flip() +
+  labs(title = "Age at award by category", x = NULL, y = "Age (years)")
+```
+
+**Question #3:** What is the average number of laureates per prize in each category and decade?
+
+```{r}
+sharing <- prizes |>
+  filter(n_laureates > 0) |>
+  group_by(category, decade) |>
+  summarise(avg_laureates = round(mean(n_laureates), 2), .groups = "drop")
+
+sharing |>
+  pivot_wider(names_from = category, values_from = avg_laureates)
+```
+
+```{r}
+ggplot(sharing, aes(decade, avg_laureates, color = category)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Average laureates per prize, by decade",
+       x = "Decade", y = "Avg laureates per prize", color = NULL)
+```
+
+**Question #4:** Comparing each laureate's birth country to the country of their first listed affiliation at the time of the award, which countries lost the most laureates, which gained the most, and what are the biggest flows?
+
+```{r}
+moves <- laureate_prizes |>
+  filter(!is.na(birth_country), !is.na(aff_country)) |>
+  mutate(moved = birth_country != aff_country)
+
+mean(moves$moved)
+```
+
+```{r}
+lost <- moves |> filter(moved) |> count(birth_country, name = "lost")
+gained <- moves |> filter(moved) |> count(aff_country, name = "gained")
+
+net_flow <- full_join(lost, gained, by = c("birth_country" = "aff_country")) |>
+  rename(country = birth_country) |>
+  replace_na(list(lost = 0, gained = 0)) |>
+  mutate(net = gained - lost) |>
+  arrange(net)
+
+net_flow
+```
+
+```{r}
+bind_rows(head(net_flow, 5), tail(net_flow, 5))
+```
+
+```{r}
+net_flow |>
+  slice(c(1:8, (n() - 7):n())) |>
+  ggplot(aes(reorder(country, net), net, fill = net > 0)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(title = "Net laureate gain/loss by country",
+       subtitle = "Awarded while affiliated with the country minus born there",
+       x = NULL, y = "Net laureates")
+```
+
+## Conclusion
+
+The 4 questions show many ways the Nobel Prize has evolved since 1901. The proportion of women individually winning in the first part of the century was very low. This went from 0% in the 1950s to around 7.5% in the 1940s up until the 1980s. However, more recently it has increased to 11.1% in the 2010s and 19.5% in the 2020s so far. It is therefore still far from equal. In the sciences the average age has significantly increased. For example Physics went from 47 to 64, Chemistry from 50.5 to 63 and Physiology/Medicine from 54 to 63. However, Peace decreased slightly to 58.5 from 64 and Economic Sciences decreased to 67 from 70. There are also more people winning awards. In Physics there have been on average 1.4 winners per prize in the 1900s, but now there are around 2.6 winners per prize in the 2020s. Similarly, Chemistry has gone from 1.0 to 2.6. However, Literature is still only 1 winner.
+
+Around 32% of laureates with an association were awarded in the country they were not born in. The country with the biggest gain was the USA, increasing by +130. Next were the United Kingdom by +11 and Switzerland by +9. The country with the biggest loss was Poland decreasing by -19, then Canada and Scotland both decreased by -9. This is only due to the country of association being a proxy variable. Scotland is also a separate country meaning that these figures are not exact. This indicates trends in who has been acknowledged.
