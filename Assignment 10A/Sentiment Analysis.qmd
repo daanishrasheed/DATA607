@@ -300,3 +300,94 @@ ggplot(sotu_scores, aes(year, score, fill = method)) +
   facet_wrap(~method, ncol = 1, scales = "free_y") +
   labs(x = NULL, y = "Net sentiment per 1,000 words")
 ```
+
+Because the lexicons use different scales, the raw values are not directly comparable. Standardizing each (z-score) puts them on one axis:
+
+```{r}
+ggplot(sotu_scores, aes(year, z, color = method)) +
+  geom_line(alpha = 0.8) +
+  labs(x = NULL, y = "Standardized net sentiment (z-score)", color = NULL)
+```
+
+```{r}
+cor_mat <- sotu_scores %>%
+  select(year, method, score) %>%
+  pivot_wider(names_from = method, values_from = score) %>%
+  select(-year) %>%
+  cor(use = "pairwise.complete.obs")
+
+round(cor_mat, 2)
+```
+
+```{r}
+lexicons <- list(
+  "AFINN"       = afinn_lex   %>% mutate(pos = value > 0),
+  "Bing et al." = bing_lex    %>% mutate(pos = sentiment == "positive"),
+  "NRC"         = nrc_lex     %>% mutate(pos = sentiment == "positive"),
+  "Syuzhet"     = syuzhet_lex %>% mutate(pos = value > 0)
+)
+
+coverage <- imap_dfr(lexicons, function(lex, name) {
+  tibble(
+    lexicon       = name,
+    words         = n_distinct(lex$word),
+    positive      = sum(lex$pos),
+    negative      = sum(!lex$pos),
+    neg_pos_ratio = round(negative / positive, 2),
+    pct_tokens_matched = round(
+      100 * nrow(semi_join(sotu_tidy, distinct(lex, word), by = "word")) /
+        nrow(sotu_tidy), 1)
+  )
+})
+
+coverage
+```
+
+In the chapter, the word-level view exposed the "miss" anomaly. Here is the same check for Bing and for the new Syuzhet lexicon on SOTU text.
+
+```{r}
+top_bing <- sotu_tidy %>%
+  inner_join(bing_lex, by = "word") %>%
+  count(word, sentiment, name = "contribution") %>%
+  mutate(lexicon = "Bing et al.")
+
+top_syuzhet <- sotu_tidy %>%
+  inner_join(syuzhet_lex, by = "word") %>%
+  count(word, value) %>%
+  mutate(sentiment = if_else(value > 0, "positive", "negative"),
+         contribution = n * abs(value),
+         lexicon = "Syuzhet") %>%
+  select(word, sentiment, contribution, lexicon)
+
+bind_rows(top_bing, top_syuzhet) %>%
+  group_by(lexicon, sentiment) %>%
+  slice_max(contribution, n = 5, with_ties = FALSE) %>%
+  ungroup() %>%
+  mutate(word = reorder_within(word, contribution, list(lexicon, sentiment))) %>%
+  ggplot(aes(contribution, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  scale_y_reordered() +
+  facet_wrap(lexicon ~ sentiment, scales = "free") +
+  labs(x = "Contribution to sentiment", y = NULL)
+```
+
+```{r}
+sotu_scores %>%
+  group_by(method) %>%
+  summarise(
+    most_positive_year = year[which.max(z)],
+    most_negative_year = year[which.min(z)]
+  )
+```
+
+## Conclusion
+
+Unlike the narrative nature of Austen’s novels which are divided into chunks of 80 lines to follow the narrative flow of the story, State of the Union speeches have no plot so the most natural division would be by time. Each year is one large chunk of text. This resulted in a larger variation in chunk sizes meaning normalisation was required at 1,000 words. This also means that whilst the chapter mentioned that the chunk size can affect results, the overall sentiment of the whole address will be more averaged with many sentiments in the middle meaning scores for each year will be more consistent.
+
+The chapter found that although there was variation in the magnitude of the three lexicons, they were consistent with the direction of change. These plots show the correlation between the 4 lexicons, including the new Syuzhet. This shows that the correlation is lower than would have been expected in relation to the visual analysis of the plots for Pride and Prejudice from the chapter, showing that the choice of lexicon was more important in this corpus.
+
+The Syuzhet lexicon is different in a few ways. It is a numeric, sentence validated, fiction based lexicon. So it is most similar to the AFINN lexicon. As opposed to being binary, Bing and NRC are binary. The coverage and size are different. The weights are small in value and nuanced so there is more impact from common words with slight sentiment. This is because there are more of them.
+
+Words that come up as the main contributors to the plots may have more of a policy meaning rather than an emotional one. This is the same issue as with the word ‘miss’ in Austen. It is worth looking at the word level plots to see if this is the case. Using a custom stop word list is one method to do this.
+
+All 4 methods are unigram based meaning they cannot account for negations or rhetoric. The results should be seen as a comparison of lexicons within one corpus. They are not an exact measurement of the tone of any administration.
