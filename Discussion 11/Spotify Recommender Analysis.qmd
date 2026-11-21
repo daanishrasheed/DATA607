@@ -1,0 +1,24 @@
+---
+title: "Recommender Analysis"
+author: "Daanish Rasheed"
+format: html
+editor: visual
+---
+
+## Overview
+
+Spotify is a music and podcast streaming service where recommendations drive a large share of listening. They appear in Home, Discover Weekly, Release Radar, Daily Mixes, Radio, and the Autoplay.
+
+## Scenario Design
+
+Scenario Design asks three questions: who are the target users, what are their key goals, and how can we help them achieve those goals?
+
+The end-users targeted by Spotify are not just listeners. It is a multi-sided platform that includes artists, labels, podcasters, and advertisers; however, the users who influence the recommender system’s functioning are listeners, either from the free or Premium tier. The goals of the organization are to improve engagement and retention rates, move listeners from the free to the Premium tier, decrease churn rates, and increase the usage time for each user. The company also seeks to make its extensive library discoverable to justify the licensing fees and keep creators loyal.
+
+To achieve this, Spotify needs to make sure that it recommends content that will keep the users coming back, that it discovers the long tail and not just the hits, and that it keeps the balance between user happiness and its goals in areas such as podcasts and original content or paid promotion.
+
+The list of potential listeners is quite wide-ranging. It consists of commuter listeners looking for background music, active exercisers, students, aficionados of particular genres, casual listeners not having much interest in configuring, and explorers eager to find new music. Several accounts can be shared, as in the case of family offers. Listeners usually wish to listen to something which would correspond to their mood and fit their situation.
+
+There is much congruency between the objectives of the organization and those of the listeners, for happy listeners stay put. However, the conflicts are very real. The listeners want comfort and security, whereas the platform seeks to expand and discover something new. Promoted content may conflict with the taste fit. Optimization for predicted engagement can lead to limiting the taste of the listener.
+
+## 
