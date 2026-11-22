@@ -7,7 +7,7 @@ editor: visual
 
 ## Overview
 
-Spotify is a music and podcast streaming service where recommendations drive a large share of listening. They appear in Home, Discover Weekly, Release Radar, Daily Mixes, Radio, and the Autoplay.
+Spotify is a music and podcast streaming service where recommendations drive a large share of listening. They appear in Home, Discover Weekly, Release Radar, Daily Mixes, Radio, and Autoplay.
 
 ## Scenario Design
 
@@ -15,10 +15,52 @@ Scenario Design asks three questions: who are the target users, what are their k
 
 The end-users targeted by Spotify are not just listeners. It is a multi-sided platform that includes artists, labels, podcasters, and advertisers; however, the users who influence the recommender system’s functioning are listeners, either from the free or Premium tier. The goals of the organization are to improve engagement and retention rates, move listeners from the free to the Premium tier, decrease churn rates, and increase the usage time for each user. The company also seeks to make its extensive library discoverable to justify the licensing fees and keep creators loyal.
 
-To achieve this, Spotify needs to make sure that it recommends content that will keep the users coming back, that it discovers the long tail and not just the hits, and that it keeps the balance between user happiness and its goals in areas such as podcasts and original content or paid promotion.
+To achieve this, Spotify needs to make sure that it recommends content that will keep the users coming back, and keeps the balance between user happiness and its goals in areas such as podcasts and original content or paid promotion.
 
-The list of potential listeners is quite wide-ranging. It consists of commuter listeners looking for background music, active exercisers, students, aficionados of particular genres, casual listeners not having much interest in configuring, and explorers eager to find new music. Several accounts can be shared, as in the case of family offers. Listeners usually wish to listen to something which would correspond to their mood and fit their situation.
+The list of potential listeners is very diverse. It consists of commuter listeners looking for background music, active people, students, fans of particular genres, casual listeners not having much interest in tuning, and explorers eager to find new music. Listeners usually wish to listen to something which would correspond to their mood and fit their situation.
 
-There is much congruency between the objectives of the organization and those of the listeners, for happy listeners stay put. However, the conflicts are very real. The listeners want comfort and security, whereas the platform seeks to expand and discover something new. Promoted content may conflict with the taste fit. Optimization for predicted engagement can lead to limiting the taste of the listener.
+The organization's goals and the listener's goals mostly align, because a happy listener stays. The tensions are real, though. Listeners often want comfort and familiarity, while the platform wants breadth and fresh discovery. Optimizing for predicted engagement can narrow a listener's taste over time. Shared accounts blur the signal, since one profile reflects several people.
 
-## 
+## Reverse Engineering
+
+Spotify doesn’t publish its architecture, so this is partly inference from how the app behaves. Discover Weekly arrives every Monday with about thirty unplayed tracks, suggesting a scheduled job that filters candidates against your history. “Because you listened to X” sections and song-based Radio hint at how each item is similar to another, while Home reshuffles the sections and cover art per person. Brand-new songs get recommended too, so content signals likely cover cold start.
+
+Published work supports this. Spotify’s main input is implicit feedback, which includes streams, skips, saves, typically modeled with matrix factorization (Hu, Koren & Volinsky, 2008) plus fast nearest-neighbor search. Audio models can estimate a track’s taste profile from its spectrogram (Van den Oord, Dieleman & Schrauwen, 2013), and many playlists are “algotorial,” with editors setting the theme and algorithms personalizing it.
+
+Likely pipeline: listening events feed user, track, and artist embeddings. Candidates come from collaborative filtering, content similarity, rules, and editorial pools; a ranker scores them; and a final pass adjusts for variety, freshness, and business rules.
+
+```{r}
+#| label: toy-cf
+users  <- paste0("u", 1:6)
+tracks <- c("TrackA", "TrackB", "TrackC", "TrackD", "TrackE")
+
+plays <- matrix(c(
+  1,1,0,0,0,
+  1,1,1,0,0,
+  0,1,1,0,0,
+  0,0,0,1,1,
+  0,0,1,1,1,
+  1,0,0,1,0
+), nrow = 6, byrow = TRUE, dimnames = list(users, tracks))
+
+cosine <- function(x, y) sum(x * y) / (sqrt(sum(x^2)) * sqrt(sum(y^2)))
+
+sim <- outer(seq_along(tracks), seq_along(tracks),
+             Vectorize(function(i, j) cosine(plays[, i], plays[, j])))
+dimnames(sim) <- list(tracks, tracks)
+round(sim, 2)
+
+recommend <- function(user, k = 2) {
+  heard  <- plays[user, ] == 1
+  scores <- colSums(sim[heard, , drop = FALSE])
+  scores[heard] <- -Inf              # do not repeat known tracks
+  names(sort(scores, decreasing = TRUE))[1:k]
+}
+recommend("u1")
+```
+
+## Recommendations
+
+There are some key areas that Spotify should consider improving in its recommendations. The recommendations should be made context-based, considering such factors as time, device, previous sessions, and the ability for users to select their context, like focus or workouts. Editing of taste profiles can assist too by giving users the chance to modify their genre and mood tags as well as the one-click exclusion of particular listening sessions. Having distinct personas will also benefit users who use the same accounts on weekdays and weekends, and for kids.
+
+An exploration slider ranging from familiar to adventurous will give users the chance to choose how much exposure to new music they want to receive. Also, the company needs to start optimizing for long-term value, rather than just the number of plays, and incorporate an exposure factor to reduce the effect of popularity bias on emerging artists. About the issue of trust, Spotify should include the labeling of sponsored content, describe all shelves with a because-you message, and add reasons for dislikes.
